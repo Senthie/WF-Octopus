@@ -1,0 +1,34 @@
+# web ignore
+/web/.DS_Store
+/web/.thumbs.db
+/web/node_modules
+
+# Quasar core related directories
+/web/.quasar
+/web//dist
+/web//quasar.config.*.temporary.compiled*
+
+# Cordova related directories and files
+/web/src-cordova/node_modules
+/web/src-cordova/platforms
+/web/src-cordova/plugins
+/web/src-cordova/www
+
+# Capacitor related directories and files
+/web/src-capacitor/www
+/web/src-capacitor/node_modules
+
+# Log files
+/web/npm-debug.log*
+/web/yarn-debug.log*
+/web/yarn-error.log*
+
+# Editor directories and files
+/web/.idea
+/web/*.suo
+/web/*.ntvs*
+/web/*.njsproj
+/web/*.sln
+
+# local .env files
+.env.local*
