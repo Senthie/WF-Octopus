@@ -50,7 +50,7 @@ def convert_pdf_to_images(pdf_path: Path, output_folder: Path, resolution=300):
         # 保存图片
         image_filename = f"{output_folder}/{pdf_path.stem}_{page_number + 1}.png"
         image.save(image_filename)
-        print(f"Saved {image_filename}")
+
     # 关闭 PDF 文件
     pdf_document.close()
 
