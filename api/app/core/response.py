@@ -149,6 +149,13 @@ class ResponseBase:
     def fail(
         self,
         *,
+        res: CustomResponseCodeEnum,
+    ) -> ResponseModel: ...
+
+    @overload
+    def fail(
+        self,
+        *,
         res: CustomResponseCodeEnum = CustomResponseCodeEnum.NOT_FOUND,
         data: T,
     ) -> ResponseSchemaModel[T]: ...
