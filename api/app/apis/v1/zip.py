@@ -72,7 +72,9 @@ async def unzip_file(file: UploadFile = File(...)) -> ResponseModel:
 
         # collect extracted file paths
         files: List[str] = [
-            str(p.resolve()) for p in target_dir.rglob("*") if p.is_file()
+            p.relative_to(Path("app/tmp")).as_posix()
+            for p in target_dir.rglob("*")
+            if p.is_file()
         ]
 
         return response_base.success(
