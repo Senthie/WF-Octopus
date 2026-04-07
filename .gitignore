@@ -5,8 +5,8 @@
 
 # Quasar core related directories
 /web/.quasar
-/web//dist
-/web//quasar.config.*.temporary.compiled*
+/web/dist
+/web/quasar.config.*.temporary.compiled*
 
 # Cordova related directories and files
 /web/src-cordova/node_modules
@@ -32,3 +32,63 @@
 
 # local .env files
 .env.local*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.ruff_cache
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# PyCharm
+.idea/
+
+# VSCode
+.vscode/
+
+# Testing
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.hypothesis/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+*.log.*
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# api ignore
+api/app/tmp/*
