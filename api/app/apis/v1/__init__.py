@@ -12,6 +12,7 @@ Copyright (c) 2026 by '浪川' email: '1214391613@qq.com', All Rights Reserved.
 from fastapi import APIRouter
 
 from app.apis.v1 import file as file_api
+from app.apis.v1 import pdf as pdf_api
 from app.apis.v1 import zip as zip_api
 
 # router实例，所有v1版本的API接口都将注册到这个router上
@@ -21,3 +22,5 @@ router = APIRouter(
 
 router.include_router(zip_api.router)
 router.include_router(file_api.router)
+
+router.include_router(pdf_api.router)
