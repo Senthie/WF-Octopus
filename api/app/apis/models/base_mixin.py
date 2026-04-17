@@ -1,0 +1,132 @@
+"""
+Author: Senthie seemoon2077@gmail.com
+Date: 2026-01-02 17:14:49
+LastEditors: Senthie seemoon2077@gmail.com
+LastEditTime: 2026-01-23 17:15:51
+FilePath: /api/app/models/base.py
+Description: Base model classes and mixins for the application.
+
+Copyright (c) 2026 by Senthie email: seemoon2077@gmail.com, All Rights Reserved.
+"""
+
+from datetime import datetime
+from typing import Any, Dict, Optional
+from uuid import UUID, uuid4
+
+from sqlmodel import Field, SQLModel
+
+from app.utils.timezone import tz_helper
+
+
+class BaseModel(SQLModel):
+    """Abstract base class for all data models.
+
+    Provides common fields and behaviors that all models should have.
+
+    :param {UUID} id
+    """
+
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert model instance to dictionary representation.
+        Returns:
+            Dictionary containing all model fields and their values.
+        """
+        result = {}
+        for field_name in self.__class__.model_fields:
+            value = getattr(self, field_name)
+            if isinstance(value, UUID):
+                result[field_name] = str(value)
+            elif isinstance(value, datetime):
+                result[field_name] = value.isoformat()
+            else:
+                result[field_name] = value
+        return result
+
+    def update_from_dict(self, data: Dict[str, Any]) -> None:
+        """Update model instance from dictionary data.
+
+        Args:
+            data: Dictionary containing field names and new values.
+        """
+        for field_name, value in data.items():
+            if hasattr(self, field_name):
+                setattr(self, field_name, value)
+
+        # Update timestamp if available
+        if hasattr(self, "updated_at"):
+            self.updated_at = tz_helper.get_current_time("Asia/Shanghai")
+
+    def __eq__(self, other: object) -> bool:
+        """Check equality based on all field values.
+
+        Args:
+            other: Another model instance to compare with.
+
+        Returns:
+            True if all fields are equal, False otherwise.
+        """
+        if not isinstance(other, self.__class__):
+            return False
+
+        for field_name in self.__class__.model_fields:
+            if getattr(self, field_name) != getattr(other, field_name):
+                return False
+
+        return True
+
+
+class TimestampMixin:
+    """
+    description: Mixin class providing timestamp fields and related methods.
+
+    param {datetime} created_at: create row time
+    param {datetime} updated_at: update row info time
+    """
+
+    created_at: datetime = Field(
+        default_factory=lambda: tz_helper.get_current_time("Asia/Shanghai")
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: tz_helper.get_current_time("Asia/Shanghai")
+    )
+
+    def touch(self) -> None:
+        """Update the updated_at timestamp to current time."""
+        self.updated_at = tz_helper.get_current_time("Asia/Shanghai")
+
+
+class SoftDeleteMixin:
+    """Mixin class providing soft delete functionality."""
+
+    deleted_at: Optional[datetime] = Field(default=None)
+    is_deleted: bool = Field(default=False)
+
+    def soft_delete(self) -> None:
+        """Mark the record as deleted without removing it from database."""
+        self.is_deleted = True
+        self.deleted_at = tz_helper.get_current_time("Asia/Shanghai")
+
+    def restore(self) -> None:
+        """Restore a soft-deleted record."""
+        self.is_deleted = False
+        self.deleted_at = None
+
+
+class AuditMixin:
+    """
+    Mixin class providing audit fields for tracking who created/updated records.
+
+    :param {UUID} created_by: User who created the record
+    :param {UUID} updated_by: User who last updated the record
+    """
+
+    created_by: UUID = Field()  # Logical FK to users
+    updated_by: Optional[UUID] = Field(default=None)  # Logical FK to users
+
+
+class WorkspaceMixin:
+    """Mixin class providing workspace isolation functionality."""
+
+    workspace_id: UUID = Field(index=True)  # Logical FK to workspaces
