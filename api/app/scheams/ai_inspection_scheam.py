@@ -2,8 +2,8 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-16 16:51:01
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-20 10:04:01
-FilePath: /api/app/apis/scheams/ai_inspection_scheam.py
+LastEditTime: 2026-04-20 10:56:37
+FilePath: /api/app/scheams/ai_inspection_scheam.py
 Description: Ai 巡检的web 输入输出模型
 
 Copyright (c) 2026 by '浪川' email: '1214391613@qq.com', All Rights Reserved.
@@ -38,3 +38,14 @@ class InspectionRecordOut(BaseModel):
     create_by: UUID = Field(..., description='创建者')
     created_at: Optional[datetime] = Field(..., description='创建时间')
     updated_at: datetime | None = Field(description='更新时间')
+
+
+class InspectionRecordin(BaseModel):
+    """
+    执行记录输出模型
+    """
+
+    inspection_requirements_id: UUID = Field(..., description=' 巡检要求明细表的唯一标识符')
+    image_gridfs_id: str = Field(description='图片id')
+    responsible_person: str = Field(..., description='区域负责人')
+    create_by: UUID = Field(..., description='创建者')
