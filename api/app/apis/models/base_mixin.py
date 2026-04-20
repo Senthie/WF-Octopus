@@ -55,8 +55,8 @@ class BaseModel(SQLModel):
                 setattr(self, field_name, value)
 
         # Update timestamp if available
-        if hasattr(self, "updated_at"):
-            self.updated_at = tz_helper.get_current_time("Asia/Shanghai")
+        if hasattr(self, 'updated_at'):
+            self.updated_at = tz_helper.get_current_time('Asia/Shanghai')
 
     def __eq__(self, other: object) -> bool:
         """Check equality based on all field values.
@@ -86,15 +86,15 @@ class TimestampMixin:
     """
 
     created_at: datetime = Field(
-        default_factory=lambda: tz_helper.get_current_time("Asia/Shanghai")
+        default_factory=lambda: tz_helper.get_current_time('Asia/Shanghai')
     )
     updated_at: datetime = Field(
-        default_factory=lambda: tz_helper.get_current_time("Asia/Shanghai")
+        default_factory=lambda: tz_helper.get_current_time('Asia/Shanghai')
     )
 
     def touch(self) -> None:
         """Update the updated_at timestamp to current time."""
-        self.updated_at = tz_helper.get_current_time("Asia/Shanghai")
+        self.updated_at = tz_helper.get_current_time('Asia/Shanghai')
 
 
 class SoftDeleteMixin:
@@ -106,7 +106,7 @@ class SoftDeleteMixin:
     def soft_delete(self) -> None:
         """Mark the record as deleted without removing it from database."""
         self.is_deleted = True
-        self.deleted_at = tz_helper.get_current_time("Asia/Shanghai")
+        self.deleted_at = tz_helper.get_current_time('Asia/Shanghai')
 
     def restore(self) -> None:
         """Restore a soft-deleted record."""
