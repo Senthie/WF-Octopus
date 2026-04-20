@@ -2,14 +2,14 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-17 10:41:34
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-20 10:35:37
-FilePath: /api/app/apis/models/ai_inspection/ai_inspection_model.py
+LastEditTime: 2026-04-20 16:30:07
+FilePath: /api/app/models/ai_inspection/ai_inspection_model.py
 Description:Ai 巡检的模型
 
 Copyright (c) 2026 by '浪川' email: '1214391613@qq.com', All Rights Reserved.
 """
 
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from sqlmodel import JSON, TEXT, Column, Field
 
@@ -34,8 +34,8 @@ class AiExecuteTaskModel(MyBaseModel, TimestampMixin, SoftDeleteMixin, AuditMixi
     """
 
     __tablename__ = 'ai_execute_task'  # type: ignore
-    model: str = Field(..., description='要执行的任务模型')
-    prompt: str = Field(..., sa_column=Column(TEXT), description='要执行的提示语')
+    model: str = Field(description='要执行的任务模型')
+    prompt: str = Field(sa_column=Column(TEXT), description='要执行的提示语')
     image_gridfs_id: str = Field(description='图片id')
 
     execute_status: TaskStatusEnum = Field(
@@ -57,8 +57,8 @@ class InspectionRequirementModel(
 
     __tablename__ = 'inspection_requirement'  # type: ignore
 
-    item_name: str = Field(..., description='巡检项目名称')
-    safety_requirement: str = Field(..., description='安全要求')
+    item_name: str = Field(description='巡检项目名称')
+    safety_requirement: str = Field(description='安全要求')
 
 
 class InspectionRecordModel(MyBaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin, table=True):
@@ -73,13 +73,11 @@ class InspectionRecordModel(MyBaseModel, TimestampMixin, SoftDeleteMixin, AuditM
 
     __tablename__ = 'inspection_record'  # type: ignore
 
-    id: UUID = Field(default_factory=uuid4)  # 唯一标识符
-
-    inspection_requirements_id: UUID = Field(..., description=' 巡检要求明细表的唯一标识符')
-    status: str = Field(..., description='巡检的状态')
+    inspection_requirements_id: UUID = Field(description=' 巡检要求明细表的唯一标识符')
+    status: str = Field(description='巡检的状态')
     image_gridfs_id: str = Field(description='图片id')
 
-    ai_detection_execute_id: UUID = Field(..., description='AI 执行图片分析的结果')
-    ai_inspection_excute_id: UUID = Field(..., description='Ai 提取的特定巡检项目结果的id')
+    ai_detection_execute_id: UUID = Field(description='AI 执行图片分析的结果')
+    ai_inspection_excute_id: UUID = Field(description='Ai 提取的特定巡检项目结果的id')
 
-    responsible_person: str = Field(..., description='区域负责人')
+    responsible_person: str = Field(description='区域负责人')

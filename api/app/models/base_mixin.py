@@ -1,9 +1,9 @@
 """
 Author: Senthie seemoon2077@gmail.com
 Date: 2026-01-02 17:14:49
-LastEditors: Senthie seemoon2077@gmail.com
-LastEditTime: 2026-01-23 17:15:51
-FilePath: /api/app/models/base.py
+LastEditors: '浪川' '1214391613@qq.com'
+LastEditTime: 2026-04-20 16:06:53
+FilePath: /api/app/models/base_mixin.py
 Description: Base model classes and mixins for the application.
 
 Copyright (c) 2026 by Senthie email: seemoon2077@gmail.com, All Rights Reserved.
@@ -15,7 +15,7 @@ from uuid import UUID, uuid4
 
 from sqlmodel import Field, SQLModel
 
-from app.utils.timezone import tz_helper
+from app.utils.timezone_help import tz_helper
 
 
 class BaseModel(SQLModel):
