@@ -13,13 +13,13 @@ from uuid import UUID, uuid4
 
 from sqlmodel import JSON, TEXT, Column, Field
 
-from app.apis.models.base_mixin import (
+from app.enums.task_enum import TaskStatusEnum
+from app.models.base_mixin import (
     AuditMixin,
     BaseModel as MyBaseModel,
     SoftDeleteMixin,
     TimestampMixin,
 )
-from app.enums.task_enum import TaskStatusEnum
 
 
 class AiExecuteTaskModel(MyBaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin, table=True):
