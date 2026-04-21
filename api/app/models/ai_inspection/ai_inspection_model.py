@@ -2,17 +2,19 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-17 10:41:34
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-20 16:30:07
+LastEditTime: 2026-04-21 15:44:42
 FilePath: /api/app/models/ai_inspection/ai_inspection_model.py
 Description:Ai 巡检的模型
 
 Copyright (c) 2026 by '浪川' email: '1214391613@qq.com', All Rights Reserved.
 """
 
+from typing import Optional
 from uuid import UUID
 
 from sqlmodel import JSON, TEXT, Column, Field
 
+from app.enums import InspectionResultEnum
 from app.enums.task_enum import TaskStatusEnum
 from app.models.base_mixin import (
     AuditMixin,
@@ -64,6 +66,7 @@ class InspectionRequirementModel(
 class InspectionRecordModel(MyBaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin, table=True):
     """
     执行记录表
+
     :param inspection_requirements_id: 巡检要求明细表的唯一标识符
     :param status: 巡检的状态
     :param image_gridfs_id: 图片id
@@ -74,10 +77,12 @@ class InspectionRecordModel(MyBaseModel, TimestampMixin, SoftDeleteMixin, AuditM
     __tablename__ = 'inspection_record'  # type: ignore
 
     inspection_requirements_id: UUID = Field(description=' 巡检要求明细表的唯一标识符')
-    status: str = Field(description='巡检的状态')
+    status: InspectionResultEnum = Field(
+        default=InspectionResultEnum.NORMAL, description='巡检的状态'
+    )
     image_gridfs_id: str = Field(description='图片id')
 
-    ai_detection_execute_id: UUID = Field(description='AI 执行图片分析的结果')
-    ai_inspection_excute_id: UUID = Field(description='Ai 提取的特定巡检项目结果的id')
+    ai_detection_execute_id: Optional[UUID] = Field(description='AI 执行图片分析的结果')
+    ai_inspection_excute_id: Optional[UUID] = Field(description='Ai 提取的特定巡检项目结果的id')
 
-    responsible_person: str = Field(description='区域负责人')
+    responsible_person: str = Field(default='', description='区域负责人')
