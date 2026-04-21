@@ -43,20 +43,28 @@ class TimezoneHelper:
 
     def get_current_time(self, timezone: Optional[str] = None) -> datetime:
         """
-        获取指定时区的当前时间
+        获取当前 UTC 时间（naive datetime），用于写入数据库。
+
+        timezone 参数保留但已忽略，统一存 UTC。
+        读取后如需展示本地时间，请使用 to_local_time()。
+        """
+        return datetime.utcnow()
+
+    def to_local_time(self, dt: datetime, timezone: str) -> datetime:
+        """
+        将数据库中的 UTC naive datetime 转换为指定时区的 aware datetime，用于展示。
 
         Args:
-            timezone: 时区名称，如果为None则使用默认时区
+            dt: 从数据库读出的 naive UTC datetime
+            timezone: 目标时区，如 'Asia/Shanghai'、'America/New_York'
 
         Returns:
-            带时区信息的datetime对象
+            带时区信息的 datetime
         """
-        tz = timezone or self.default_tz
-
         if ZONEINFO_AVAILABLE:
-            return datetime.now(ZoneInfo(tz))
+            return dt.replace(tzinfo=ZoneInfo('UTC')).astimezone(ZoneInfo(timezone))
         elif PYTZ_AVAILABLE:
-            return datetime.now(pytz.timezone(tz))
+            return pytz.UTC.localize(dt).astimezone(pytz.timezone(timezone))
         else:
             raise ImportError("需要安装 zoneinfo (Python 3.9+) 或 pytz 库")
 
