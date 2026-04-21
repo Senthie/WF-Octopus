@@ -2,7 +2,7 @@
 Author: kk123047 3254834740@qq.com
 Date: 2025-12-09 18:00:00
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-20 14:56:02
+LastEditTime: 2026-04-21 11:46:25
 FilePath: /api/app/core/config.py
 Description: 应用配置管理
 
@@ -120,7 +120,7 @@ class Settings(BaseSettings):
 
 
 # Global settings instance
-settings = Settings()
+settings = Settings()  # type: ignore
 
 if __name__ == '__main__':
     print(settings.mongodb_url)
