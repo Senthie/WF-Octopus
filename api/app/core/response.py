@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-03 15:47:43
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-03 15:56:29
+LastEditTime: 2026-04-21 11:14:58
 FilePath: /api/app/core/response.py
 Description:返回的数据的 schema的通用型统一格式
 
@@ -14,9 +14,9 @@ from typing import Any, Generic, TypeVar, overload
 from pydantic import BaseModel, Field
 
 from app.enums.response_code_enum import CustomResponseCodeEnum
-from app.utils.timezone import tz_helper
+from app.utils.timezone_help import tz_helper
 
-T = TypeVar("T")
+T = TypeVar('T')
 
 
 class ResponseModel(BaseModel):
@@ -41,17 +41,17 @@ class ResponseModel(BaseModel):
             return ResponseModel(code=res.code, msg=res.msg, data={'test': 'test'})
     """
 
-    code: int = Field(CustomResponseCodeEnum.SUCCESS.code, description="返回状态码")
-    msg: str = Field(CustomResponseCodeEnum.SUCCESS.msg, description="返回信息")
-    data: Any | None = Field(None, description="返回数据")
-    timestamp: str = Field(..., description="返回时间戳")
+    code: int = Field(CustomResponseCodeEnum.SUCCESS.code, description='返回状态码')
+    msg: str = Field(CustomResponseCodeEnum.SUCCESS.msg, description='返回信息')
+    data: Any | None = Field(None, description='返回数据')
+    timestamp: str = Field(..., description='返回时间戳')
 
     def to_dict(self):
         return {
-            "code": self.code,
-            "msg": self.msg,
-            "data": self.data,
-            "timestamp": self.timestamp,
+            'code': self.code,
+            'msg': self.msg,
+            'data': self.data,
+            'timestamp': self.timestamp,
         }
 
 
@@ -98,9 +98,7 @@ class ResponseBase:
         """
         current_time = tz_helper.get_current_time()
         timestamp_str = tz_helper.format_time(current_time)
-        return ResponseModel(
-            code=res.code, msg=res.msg, data=data, timestamp=timestamp_str
-        )
+        return ResponseModel(code=res.code, msg=res.msg, data=data, timestamp=timestamp_str)
 
     @overload
     def success(
