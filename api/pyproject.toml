@@ -6,12 +6,16 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "alembic==1.18.4",
+    "asyncpg>=0.31.0",
     "fastapi[standard]>=0.135.3",
+    "motor>=3.7.1",
     "pillow>=12.2.0",
     "psycopg2>=2.9.11",
+    "pymongo>=4.17.0",
     "pymupdf>=1.27.2.2",
     "python-dotenv>=1.2.2",
     "sqlmodel>=0.0.38",
+    "structlog>=25.5.0",
     "tzlocal>=5.3.1",
 ]
 [tool.black]
@@ -94,3 +98,8 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+
+[dependency-groups]
+dev = [
+    "rich>=14.3.3",
+]
