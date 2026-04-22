@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-07 10:50:57
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-21 11:43:19
+LastEditTime: 2026-04-22 17:53:39
 FilePath: /api/app/main.py
 Description:
 
@@ -82,5 +82,11 @@ app = FastAPI(
     openapi_url='/openapi.json',
     lifespan=lifespan,
 )
+
+
+@app.get('/')
+def get_root():
+    return {'message': 'Welcome to the WF-Octopus API'}
+
 
 app.include_router(v1_router)
