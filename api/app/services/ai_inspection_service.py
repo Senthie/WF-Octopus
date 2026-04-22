@@ -18,7 +18,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.core.exceptions import AiInspectionException
 from app.enums import CustomResponseCodeEnum
 from app.models import InspectionRecordModel
-from app.scheams import InspectionRecordin
+from app.scheams import InspectionRecordIn
 
 
 class AiInspectionService:
@@ -27,7 +27,7 @@ class AiInspectionService:
 
         self.create_by = uuid.UUID('88ca2407-2e66-4f33-a9b1-c99c1f088ca5')
 
-    async def add(self, inD: InspectionRecordin) -> InspectionRecordModel:
+    async def add(self, inD: InspectionRecordIn) -> InspectionRecordModel:
         data = inD.model_dump()  # 或 .dict() 取决于 Pydantic 版本
         data.setdefault('created_by', self.create_by)  # 例如从上下文中获取
         data.setdefault('ai_detection_execute_id', None)  # 或生成 UUID

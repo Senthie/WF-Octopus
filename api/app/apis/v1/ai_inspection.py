@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-16 16:33:10
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-22 10:01:48
+LastEditTime: 2026-04-22 17:26:36
 FilePath: /api/app/apis/v1/ai_inspection.py
 Description: 巡检接口点
 
@@ -21,7 +21,7 @@ from app.core.logging import get_logger
 from app.core.pg_database import get_session
 from app.core.response import ResponseModel, response_base
 from app.enums.response_code_enum import CustomResponseCodeEnum
-from app.scheams.ai_inspection_scheam import InspectionRecordin
+from app.scheams import InspectionRecordIn
 from app.services import AiInspectionService
 
 router = APIRouter(prefix='/ai-inspection', tags=['ai inspection v1'])
@@ -39,7 +39,7 @@ AiInspectionServiceDep = Annotated[AiInspectionService, Depends(get_organization
 
 
 @router.post('/', summary='添加检测的拍照记录')
-async def add(inD: InspectionRecordin, service: AiInspectionServiceDep) -> ResponseModel:
+async def add(inD: InspectionRecordIn, service: AiInspectionServiceDep) -> ResponseModel:
     """
     接收一个检测的拍照记录
     """

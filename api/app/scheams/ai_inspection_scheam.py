@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-16 16:51:01
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-21 15:37:09
+LastEditTime: 2026-04-22 17:30:44
 FilePath: /api/app/scheams/ai_inspection_scheam.py
 Description: Ai 巡检的web 输入输出模型
 
@@ -40,7 +40,7 @@ class InspectionRecordOut(BaseModel):
     updated_at: datetime | None = Field(description='更新时间')
 
 
-class InspectionRecordin(BaseModel):
+class InspectionRecordIn(BaseModel):
     """
     执行记录传入模型
     """
