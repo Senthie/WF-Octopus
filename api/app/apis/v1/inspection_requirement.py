@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-22 17:26:30
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-23 11:16:41
+LastEditTime: 2026-04-23 12:29:48
 FilePath: /api/app/apis/v1/inspection_requirement.py
 Description: 巡检要求接口
 
@@ -17,9 +17,10 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.logging import get_logger
 from app.core.pg_database import get_session
-from app.core.response import ResponseModel, response_base
+from app.core.response import ResponseModel, ResponseSchemaModel, response_base
 from app.enums.response_code_enum import CustomResponseCodeEnum
-from app.scheams import InspectionRequirementIn
+from app.scheams import InspectionRequirementIn, InspectionRequirementOut
+from app.scheams.page_schemas import PageReq, PageRes
 from app.services import InspectionRequirementService
 
 router = APIRouter(prefix='/inspection-requirement', tags=['inspection requirement v1'])
@@ -102,3 +103,26 @@ async def get_by_id(id: UUID, service: InspectionRequirementServiceDep) -> Respo
             res=CustomResponseCodeEnum.INTERNAL_SERVER_ERROR,
             data=f'Failed to get archive: {str(e)}',
         )
+
+
+@router.post('/list')
+async def list_workflows(
+    page_req: PageReq,
+    service: InspectionRequirementServiceDep,
+) -> ResponseSchemaModel[PageRes[InspectionRequirementOut]]:
+    """
+    List all workflows in the specified workspace.
+
+    Args:
+        workspace_id: ID of the workspace
+        current_user: Current authenticated user
+        session: Database session
+        skip: Number of records to skip
+        limit: Maximum number of records to return
+
+    Returns:
+        List of workflows and total count
+    """
+
+    res = await service.get_list(page_req=page_req)
+    return response_base.success(data=res)  # type: ignore

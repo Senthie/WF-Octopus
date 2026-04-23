@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-20 17:44:34
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-22 17:31:14
+LastEditTime: 2026-04-23 12:08:54
 FilePath: /api/app/scheams/__init__.py
 Description: 导入前后端的数据模型
 
@@ -16,6 +16,15 @@ from app.scheams.ai_inspection_scheam import (
 )
 from app.scheams.inspection_requirement_scheam import (
     InspectionRequirementIn,
+    InspectionRequirementOut,
 )
+from app.scheams.page_schemas import PageReq, PageRes
 
-__all__ = ['InspectionRecordIn', 'InspectionRecordOut', 'InspectionRequirementIn']
+__all__ = [
+    'InspectionRecordIn',
+    'InspectionRecordOut',
+    'InspectionRequirementIn',
+    'InspectionRequirementOut',
+    'PageReq',
+    'PageRes',
+]

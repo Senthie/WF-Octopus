@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-22 17:32:02
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-23 11:51:30
+LastEditTime: 2026-04-23 12:23:06
 FilePath: /api/app/services/inspection_requirement_service.py
 Description: service层，用于处理巡检要求相关的业务逻辑。
 
@@ -17,7 +17,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.core.exceptions import InspectionRequirementException
 from app.enums import CustomResponseCodeEnum
 from app.models import InspectionRequirementModel
-from app.scheams import InspectionRequirementIn
+from app.scheams import InspectionRequirementIn, InspectionRequirementOut, PageReq, PageRes
 
 
 class InspectionRequirementService:
@@ -74,3 +74,29 @@ class InspectionRequirementService:
             raise InspectionRequirementException(
                 CustomResponseCodeEnum.INSPECTION_REQUIREMENT_NOT_FOUND
             )
+
+    async def get_list(self, page_req: PageReq) -> PageRes[InspectionRequirementOut]:
+        # Query workflows
+        # 计算跳过值
+        skip = (page_req.current - 1) * page_req.size
+        statement = (
+            select(InspectionRequirementModel)
+            .where(InspectionRequirementModel.is_deleted != True)  # noqa: E712
+            .offset(skip)
+            .limit(page_req.size)
+        )
+        result = await self.session.execute(statement)
+        irs = result.scalars().all()
+        irs = [InspectionRequirementOut.model_validate(ir) for ir in irs]
+        # Count total
+        count_statement = (
+            select(InspectionRequirementModel).where(InspectionRequirementModel.is_deleted != True)  # noqa: E712
+        )
+        count_result = await self.session.execute(count_statement)
+        total = len(count_result.scalars().all())
+
+        page_res = PageRes.model_validate(page_req.model_dump())
+        page_res.records = irs
+        page_res.total = total
+
+        return page_res
