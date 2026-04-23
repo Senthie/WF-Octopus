@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-22 17:27:29
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-23 12:07:46
+LastEditTime: 2026-04-23 15:00:56
 FilePath: /api/app/scheams/inspection_requirement_scheam.py
 Description:
 
@@ -27,7 +27,7 @@ class InspectionRequirementIn(BaseModel):
 
 class InspectionRequirementOut(BaseModel):
     """
-    巡检要求明细表传入模型
+    巡检要求明细表传出模型
     """
 
     model_config = {'from_attributes': True}

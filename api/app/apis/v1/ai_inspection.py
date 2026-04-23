@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-16 16:33:10
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-22 17:26:36
+LastEditTime: 2026-04-23 14:18:14
 FilePath: /api/app/apis/v1/ai_inspection.py
 Description: 巡检接口点
 
@@ -19,9 +19,11 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.core.exceptions import AiInspectionException
 from app.core.logging import get_logger
 from app.core.pg_database import get_session
-from app.core.response import ResponseModel, response_base
+from app.core.response import ResponseModel, ResponseSchemaModel, response_base
 from app.enums.response_code_enum import CustomResponseCodeEnum
 from app.scheams import InspectionRecordIn
+from app.scheams.ai_inspection_scheam import InspectionRecordOut
+from app.scheams.page_schemas import PageReq, PageRes
 from app.services import AiInspectionService
 
 router = APIRouter(prefix='/ai-inspection', tags=['ai inspection v1'])
@@ -101,3 +103,34 @@ async def delete_by_id(id: UUID, service: AiInspectionServiceDep) -> ResponseMod
             res=CustomResponseCodeEnum.INTERNAL_SERVER_ERROR,
             data=f'Failed to extract archive: {str(e)}',
         )
+
+
+@router.put('/{id}', summary='更新检测的拍照记录')
+async def update_by_id(
+    id: UUID, inD: InspectionRecordIn, service: AiInspectionServiceDep
+) -> ResponseModel:
+    try:
+        res = await service.update_by_id(id, inD)
+        return response_base.success(
+            res=CustomResponseCodeEnum.SUCCESS,
+            data=res,
+        )
+    except Exception as e:
+        return response_base.fail(
+            res=CustomResponseCodeEnum.INTERNAL_SERVER_ERROR,
+            data=f'Failed to update archive: {str(e)}',
+        )
+
+
+@router.post('/list')
+async def list_(
+    page_req: PageReq,
+    service: AiInspectionServiceDep,
+) -> ResponseSchemaModel[PageRes[InspectionRecordOut]]:
+    """
+    获取巡检记录列表
+
+    """
+
+    res = await service.get_list(page_req=page_req)
+    return response_base.success(data=res)  # type: ignore
