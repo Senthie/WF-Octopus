@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-22 17:26:30
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-22 17:41:59
+LastEditTime: 2026-04-23 11:16:41
 FilePath: /api/app/apis/v1/inspection_requirement.py
 Description: 巡检要求接口
 
@@ -10,6 +10,7 @@ Copyright (c) 2026 by '浪川' email: '1214391613@qq.com', All Rights Reserved.
 """
 
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -38,7 +39,9 @@ InspectionRequirementServiceDep = Annotated[
 
 
 @router.post('/', summary='添加检测要求')
-async def add(inD: InspectionRequirementIn, service: InspectionRequirementServiceDep) -> ResponseModel:
+async def add(
+    inD: InspectionRequirementIn, service: InspectionRequirementServiceDep
+) -> ResponseModel:
     try:
         res = await service.add(inD)
         return response_base.success(
@@ -50,4 +53,52 @@ async def add(inD: InspectionRequirementIn, service: InspectionRequirementServic
         return response_base.fail(
             res=CustomResponseCodeEnum.INTERNAL_SERVER_ERROR,
             data=f'Failed to extract archive: {str(e)}',
+        )
+
+
+@router.delete('/{id}', summary='删除检测要求')
+async def delete_by_id(id: UUID, service: InspectionRequirementServiceDep) -> ResponseModel:
+    try:
+        res = await service.delete_by_id(id)
+        return response_base.success(
+            res=CustomResponseCodeEnum.SUCCESS,
+            data=res,
+        )
+
+    except Exception as e:
+        return response_base.fail(
+            res=CustomResponseCodeEnum.INTERNAL_SERVER_ERROR,
+            data=f'Failed to extract archive: {str(e)}',
+        )
+
+
+@router.put('/{id}', summary='更新检测要求')
+async def update_by_id(
+    id: UUID, inD: InspectionRequirementIn, service: InspectionRequirementServiceDep
+) -> ResponseModel:
+    try:
+        res = await service.update_by_id(id, inD)
+        return response_base.success(
+            res=CustomResponseCodeEnum.SUCCESS,
+            data=res,
+        )
+    except Exception as e:
+        return response_base.fail(
+            res=CustomResponseCodeEnum.INTERNAL_SERVER_ERROR,
+            data=f'Failed to update archive: {str(e)}',
+        )
+
+
+@router.get('/{id}', summary='获取检测要求')
+async def get_by_id(id: UUID, service: InspectionRequirementServiceDep) -> ResponseModel:
+    try:
+        res = await service.get_by_id(id)
+        return response_base.success(
+            res=CustomResponseCodeEnum.SUCCESS,
+            data=res,
+        )
+    except Exception as e:
+        return response_base.fail(
+            res=CustomResponseCodeEnum.INTERNAL_SERVER_ERROR,
+            data=f'Failed to get archive: {str(e)}',
         )

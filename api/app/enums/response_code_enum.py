@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-03 15:57:55
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-21 17:05:29
+LastEditTime: 2026-04-23 10:52:49
 FilePath: /api/app/enums/response_code_enum.py
 Description:自定义响应代码和信息
 
@@ -46,3 +46,6 @@ class CustomResponseCodeEnum(CustomCodeBase):
 
     # AI 巡检
     INSPECTION_RECORD_NOT_FOUND = (2001, '巡检记录未找到')
+
+    # 巡检要求
+    INSPECTION_REQUIREMENT_NOT_FOUND = (3001, '巡检要求未找到')
