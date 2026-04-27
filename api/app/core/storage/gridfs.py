@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-23 16:28:28
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-27 11:19:49
+LastEditTime: 2026-04-27 12:04:10
 FilePath: /api/app/core/storage/gridfs.py
 Description: MongoDB GridFS 存储后端实现
 
@@ -150,7 +150,7 @@ class GridFSBackend(StorageBackend):
             logger.error('Failed to download file from GridFS', file_id=file_id, error=str(e))
             raise FileDownloadError(file_id=file_id, reason=str(e)) from e
 
-    async def delete(self, file_id: str) -> bool:
+    async def delete(self, file_id: UUID) -> bool:
         """从 GridFS 删除文件
 
         Args:
@@ -160,25 +160,21 @@ class GridFSBackend(StorageBackend):
             bool: 删除成功返回 True
         """
         try:
-            # 验证 ObjectId 格式
-            if not ObjectId.is_valid(file_id):
-                return False
-
             # 检查文件是否存在
             if not await self.exists(file_id):
                 return False
 
             # 删除文件
-            await self.bucket.delete(ObjectId(file_id))
+            await self.bucket.delete(str(file_id))
 
             logger.info('File deleted from GridFS', file_id=file_id)
             return True
 
         except Exception as e:
             logger.error('Failed to delete file from GridFS', file_id=file_id, error=str(e))
-            raise FileDeletionError(file_id=file_id, reason=str(e)) from e
+            raise FileDeletionError(file_id=str(file_id), reason=str(e)) from e
 
-    async def exists(self, file_id: str) -> bool:
+    async def exists(self, file_id: UUID) -> bool:
         """检查文件是否存在于 GridFS
 
         Args:
@@ -188,11 +184,8 @@ class GridFSBackend(StorageBackend):
             bool: 文件存在返回 True
         """
         try:
-            if not ObjectId.is_valid(file_id):
-                return False
-
             # 尝试查找文件
-            file_doc = await self.bucket.find({'_id': ObjectId(file_id)}).to_list(length=1)
+            file_doc = await self.bucket.find({'_id': str(file_id)}).to_list(length=1)
             return len(file_doc) > 0
 
         except Exception as e:

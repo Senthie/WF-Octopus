@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-07 11:36:36
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-27 11:09:11
+LastEditTime: 2026-04-27 11:29:46
 FilePath: /api/app/apis/v1/file.py
 Description: get files api point
 
@@ -11,6 +11,7 @@ Copyright (c) 2026 by '浪川' email: '1214391613@qq.com', All Rights Reserved.
 
 from pathlib import Path
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import (
     APIRouter,
@@ -19,7 +20,6 @@ from fastapi import (
     HTTPException,
     Path as PathParam,
     UploadFile,
-    status,
 )
 from fastapi.responses import FileResponse
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -28,6 +28,7 @@ from starlette.background import BackgroundTask
 from app.core.logging import get_logger
 from app.core.pg_database import get_session
 from app.core.response import ResponseModel, response_base
+from app.enums.response_code_enum import CustomResponseCodeEnum
 from app.schemas import FileReferenceOut
 from app.services.file_service import FileService
 
@@ -122,11 +123,29 @@ async def upload_file(
     try:
         file_reference = await file_service.upload_file(file=file, user=None)
 
-        return response_base.success(data=FileReferenceOut.model_validate(file_reference))
+        return response_base.success(
+            res=CustomResponseCodeEnum.SUCCESS, data=FileReferenceOut.model_validate(file_reference)
+        )
 
     except Exception as e:
         logger.error('File upload failed', error=str(e))
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f'Failed to upload file: {str(e)}',
-        ) from e
+        return response_base.fail(
+            res=CustomResponseCodeEnum.INTERNAL_SERVER_ERROR,
+            data=f'Failed to upload file: {str(e)}',
+        )
+
+
+@router.delete('/{id}', summary='删除检测要求')
+async def delete_by_id(id: UUID, service: FileServiceDep) -> ResponseModel:
+    try:
+        res = await service.delete_by_id(id)
+        return response_base.success(
+            res=CustomResponseCodeEnum.SUCCESS,
+            data=res,
+        )
+
+    except Exception as e:
+        return response_base.fail(
+            res=CustomResponseCodeEnum.INTERNAL_SERVER_ERROR,
+            data=f'Failed to extract archive: {str(e)}',
+        )

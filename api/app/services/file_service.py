@@ -138,7 +138,7 @@ class FileService:
 
         return file_reference, file_stream
 
-    async def delete_file(self, file_id: UUID) -> bool:
+    async def delete_by_id(self, file_id: UUID) -> bool:
         """删除文件
 
         流程：
@@ -161,7 +161,7 @@ class FileService:
             logger.warning('File not found for deletion', file_id=str(file_id))
             return False
 
-        mongo_id = file_reference.mongo_id
+        gridfs_id = file_reference.gridfs_id
 
         try:
             # 2. 删除 PostgreSQL 记录
@@ -170,17 +170,17 @@ class FileService:
 
             # 3. 删除 GridFS 文件（最佳努力，失败不回滚）
             try:
-                await self.storage.delete(mongo_id)
+                await self.storage.delete(gridfs_id)
                 logger.info(
                     'File deleted successfully',
                     file_id=str(file_id),
-                    mongo_id=mongo_id,
+                    gridfs_id=gridfs_id,
                 )
             except Exception as storage_error:
                 logger.error(
                     'Failed to delete GridFS file (metadata already deleted)',
                     file_id=str(file_id),
-                    mongo_id=mongo_id,
+                    gridfs_id=gridfs_id,
                     error=str(storage_error),
                 )
 
