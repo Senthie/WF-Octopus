@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-16 16:33:10
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-23 14:18:14
+LastEditTime: 2026-04-27 10:03:02
 FilePath: /api/app/apis/v1/ai_inspection.py
 Description: 巡检接口点
 
@@ -21,9 +21,9 @@ from app.core.logging import get_logger
 from app.core.pg_database import get_session
 from app.core.response import ResponseModel, ResponseSchemaModel, response_base
 from app.enums.response_code_enum import CustomResponseCodeEnum
-from app.scheams import InspectionRecordIn
-from app.scheams.ai_inspection_scheam import InspectionRecordOut
-from app.scheams.page_schemas import PageReq, PageRes
+from app.schemas import InspectionRecordIn
+from app.schemas.ai_inspection_schema import InspectionRecordOut
+from app.schemas.page_schema import PageReq, PageRes
 from app.services import AiInspectionService
 
 router = APIRouter(prefix='/ai-inspection', tags=['ai inspection v1'])

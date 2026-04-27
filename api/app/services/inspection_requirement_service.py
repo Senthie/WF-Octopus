@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-22 17:32:02
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-23 12:23:06
+LastEditTime: 2026-04-27 10:02:59
 FilePath: /api/app/services/inspection_requirement_service.py
 Description: service层，用于处理巡检要求相关的业务逻辑。
 
@@ -17,7 +17,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.core.exceptions import InspectionRequirementException
 from app.enums import CustomResponseCodeEnum
 from app.models import InspectionRequirementModel
-from app.scheams import InspectionRequirementIn, InspectionRequirementOut, PageReq, PageRes
+from app.schemas import InspectionRequirementIn, InspectionRequirementOut, PageReq, PageRes
 
 
 class InspectionRequirementService:

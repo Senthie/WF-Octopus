@@ -10,15 +10,15 @@ Description: 导入前后端的数据模型
 Copyright (c) 2026 by '浪川' email: '1214391613@qq.com', All Rights Reserved.
 """
 
-from app.scheams.ai_inspection_scheam import (
+from app.schemas.ai_inspection_schema import (
     InspectionRecordIn,
     InspectionRecordOut,
 )
-from app.scheams.inspection_requirement_scheam import (
+from app.schemas.inspection_requirement_schema import (
     InspectionRequirementIn,
     InspectionRequirementOut,
 )
-from app.scheams.page_schemas import PageReq, PageRes
+from app.schemas.page_schema import PageReq, PageRes
 
 __all__ = [
     'InspectionRecordIn',

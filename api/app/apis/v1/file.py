@@ -2,8 +2,8 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-07 11:36:36
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-07 11:41:57
-FilePath: /api/app/apis/v1/tmp.py
+LastEditTime: 2026-04-23 16:22:05
+FilePath: /api/app/apis/v1/file.py
 Description: get files api point
 
 Copyright (c) 2026 by '浪川' email: '1214391613@qq.com', All Rights Reserved.
@@ -11,15 +11,14 @@ Copyright (c) 2026 by '浪川' email: '1214391613@qq.com', All Rights Reserved.
 
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException
-from fastapi import Path as PathParam
+from fastapi import APIRouter, HTTPException, Path as PathParam
 from fastapi.responses import FileResponse
 from starlette.background import BackgroundTask
 
-router = APIRouter(prefix="/file", tags=["file v1"])
+router = APIRouter(prefix='/file', tags=['file v1'])
 
 # 基础目录（建议使用绝对路径，可从配置读取）
-TMP_BASE = Path("app/tmp")
+TMP_BASE = Path('app/tmp')
 TMP_BASE = TMP_BASE.resolve()  # 转为绝对路径
 
 
@@ -31,11 +30,9 @@ def is_safe_path(user_path: str, base_dir: Path) -> bool:
     return resolved.is_relative_to(base_dir)
 
 
-@router.get("/tmp-files/{filepath:path}")
+@router.get('/tmp-files/{filepath:path}')
 async def get_tmp_file(
-    filepath: str = PathParam(
-        ..., description="文件相对路径，支持子目录，如 'subdir/photo.jpg'"
-    ),
+    filepath: str = PathParam(..., description="文件相对路径，支持子目录，如 'subdir/photo.jpg'"),
     download: bool = False,
 ):
     """
@@ -44,15 +41,13 @@ async def get_tmp_file(
     """
     # 1. 路径安全校验
     if not is_safe_path(filepath, TMP_BASE):
-        raise HTTPException(
-            status_code=403, detail="Forbidden: path traversal detected"
-        )
+        raise HTTPException(status_code=403, detail='Forbidden: path traversal detected')
     # 2. 构建真实文件路径
     full_path = TMP_BASE / filepath
 
     # 3. 检查文件是否存在且为文件（不是目录）
     if not full_path.is_file():
-        raise HTTPException(status_code=404, detail="File not found")
+        raise HTTPException(status_code=404, detail='File not found')
     # 4. 返回文件
     # FileResponse 会自动处理：
     #   - 流式传输（适合大文件）
@@ -62,7 +57,7 @@ async def get_tmp_file(
     filename = full_path.name
     if download:
         # 强制下载
-        headers = {"Content-Disposition": f"attachment; filename={filename}"}
+        headers = {'Content-Disposition': f'attachment; filename={filename}'}
         return FileResponse(
             path=full_path,
             headers=headers,
