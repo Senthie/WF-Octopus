@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-20 10:58:16
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-23 14:51:19
+LastEditTime: 2026-04-27 10:04:28
 FilePath: /api/app/services/ai_inspection_service.py
 Description:  AI检测服务类，用于处理AI相关的业务逻辑
 
@@ -19,9 +19,9 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.core.exceptions import AiInspectionException
 from app.enums import CustomResponseCodeEnum
 from app.models import InspectionRecordModel
-from app.scheams import InspectionRecordIn
-from app.scheams.ai_inspection_scheam import InspectionRecordOut
-from app.scheams.page_schemas import PageReq, PageRes
+from app.schemas import InspectionRecordIn
+from app.schemas.ai_inspection_schema import InspectionRecordOut
+from app.schemas.page_schema import PageReq, PageRes
 
 
 class AiInspectionService:

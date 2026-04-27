@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-23 16:28:28
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-24 11:53:37
+LastEditTime: 2026-04-27 11:19:49
 FilePath: /api/app/core/storage/gridfs.py
 Description: MongoDB GridFS 存储后端实现
 
@@ -14,7 +14,14 @@ Copyright (c) 2026 by '浪川' email: '1214391613@qq.com', All Rights Reserved.
 
 from datetime import datetime
 from typing import Any, AsyncGenerator, Optional
+from uuid import UUID, uuid4
 
+from bson import ObjectId
+from fastapi import UploadFile
+from motor.motor_asyncio import AsyncIOMotorGridFSBucket
+
+from app.core.logging import get_logger
+from app.core.mongodb import mongodb_client
 from app.core.storage.base import StorageBackend
 from app.core.storage.exceptions import (
     FileDeletionError,
@@ -23,12 +30,6 @@ from app.core.storage.exceptions import (
     FileUploadError,
     StorageConnectionError,
 )
-from bson import ObjectId
-from fastapi import UploadFile
-from motor.motor_asyncio import AsyncIOMotorGridFSBucket
-
-from app.core.logging import get_logger
-from app.core.mongodb import mongodb_client
 
 logger = get_logger(__name__)
 
@@ -72,7 +73,7 @@ class GridFSBackend(StorageBackend):
 
         return self._bucket
 
-    async def upload(self, file: UploadFile, metadata: Optional[dict[str, Any]] = None) -> str:
+    async def upload(self, file: UploadFile, metadata: Optional[dict[str, Any]] = None) -> UUID:
         """上传文件到 GridFS
 
         Args:
@@ -93,20 +94,24 @@ class GridFSBackend(StorageBackend):
                 'upload_date': datetime.utcnow(),
                 **(metadata or {}),
             }
-
+            # 生成 UUID 作为 _id
+            file_uuid = uuid4()  # 32位十六进制字符串，例如 '9b1deb4d3b7d4bad9bdd2b0d7b3dcb6
             # 流式上传到 GridFS
-            file_id = await self.bucket.upload_from_stream(
-                filename=file.filename or 'unknown', source=file.file, metadata=file_metadata
+            await self.bucket.upload_from_stream_with_id(
+                filename=file.filename or 'unknown',
+                source=file.file,
+                metadata=file_metadata,
+                file_id=str(file_uuid),
             )
 
             logger.info(
                 'File uploaded to GridFS',
-                file_id=str(file_id),
+                file_id=str(file_uuid),
                 filename=file.filename,
                 size=file.size,
             )
 
-            return str(file_id)
+            return file_uuid
 
         except Exception as e:
             logger.error('Failed to upload file to GridFS', filename=file.filename, error=str(e))

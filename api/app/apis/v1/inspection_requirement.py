@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-22 17:26:30
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-23 12:29:48
+LastEditTime: 2026-04-27 10:04:27
 FilePath: /api/app/apis/v1/inspection_requirement.py
 Description: 巡检要求接口
 
@@ -19,8 +19,8 @@ from app.core.logging import get_logger
 from app.core.pg_database import get_session
 from app.core.response import ResponseModel, ResponseSchemaModel, response_base
 from app.enums.response_code_enum import CustomResponseCodeEnum
-from app.scheams import InspectionRequirementIn, InspectionRequirementOut
-from app.scheams.page_schemas import PageReq, PageRes
+from app.schemas import InspectionRequirementIn, InspectionRequirementOut
+from app.schemas.page_schema import PageReq, PageRes
 from app.services import InspectionRequirementService
 
 router = APIRouter(prefix='/inspection-requirement', tags=['inspection requirement v1'])

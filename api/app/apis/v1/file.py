@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-07 11:36:36
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-23 16:22:05
+LastEditTime: 2026-04-27 11:09:11
 FilePath: /api/app/apis/v1/file.py
 Description: get files api point
 
@@ -10,16 +10,44 @@ Copyright (c) 2026 by '浪川' email: '1214391613@qq.com', All Rights Reserved.
 """
 
 from pathlib import Path
+from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Path as PathParam
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    HTTPException,
+    Path as PathParam,
+    UploadFile,
+    status,
+)
 from fastapi.responses import FileResponse
+from sqlmodel.ext.asyncio.session import AsyncSession
 from starlette.background import BackgroundTask
 
+from app.core.logging import get_logger
+from app.core.pg_database import get_session
+from app.core.response import ResponseModel, response_base
+from app.schemas import FileReferenceOut
+from app.services.file_service import FileService
+
 router = APIRouter(prefix='/file', tags=['file v1'])
+logger = get_logger(__name__)
 
 # 基础目录（建议使用绝对路径，可从配置读取）
 TMP_BASE = Path('app/tmp')
 TMP_BASE = TMP_BASE.resolve()  # 转为绝对路径
+
+# 依赖注入定义
+DbSession = Annotated[AsyncSession, Depends(get_session)]
+
+
+def get_organization_service(session: DbSession) -> FileService:
+    """获取企业服务实例"""
+    return FileService(session)
+
+
+FileServiceDep = Annotated[FileService, Depends(get_organization_service)]
 
 
 def is_safe_path(user_path: str, base_dir: Path) -> bool:
@@ -66,3 +94,39 @@ async def get_tmp_file(
     else:
         # 内联预览（浏览器自动处理）
         return FileResponse(path=full_path)
+
+
+@router.post(
+    '/upload',
+    summary='上传文件',
+    description='上传文件到系统，自动选择存储方式（小文件用 MongoDB，大文件用 GridFS）',
+)
+async def upload_file(
+    file: Annotated[UploadFile, File(description='要上传的文件')],
+    file_service: FileServiceDep,
+) -> ResponseModel:
+    """上传文件
+
+    Args:
+        file: 上传的文件对象
+        workspace_id: 工作空间 ID（租户隔离）
+        uploaded_by: 上传者用户 ID
+        file_service: 文件服务实例
+
+    Returns:
+        FileUploadResponse: 文件上传响应
+
+    Raises:
+        HTTPException: 上传失败时抛出 500 错误
+    """
+    try:
+        file_reference = await file_service.upload_file(file=file, user=None)
+
+        return response_base.success(data=FileReferenceOut.model_validate(file_reference))
+
+    except Exception as e:
+        logger.error('File upload failed', error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f'Failed to upload file: {str(e)}',
+        ) from e
