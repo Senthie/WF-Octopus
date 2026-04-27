@@ -79,6 +79,7 @@ ignore = [
     "E501",
     "B008",
     "E402", # Module level import not at top of file (解决头部注释导致的报错)
+    "E712",
 ]
 # 3. Avoid trying to fix flake8-bugbear (`B`) violations.
 unfixable = ["B"]
@@ -100,6 +101,4 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 
 [dependency-groups]
-dev = [
-    "rich>=14.3.3",
-]
+dev = ["rich>=14.3.3"]
