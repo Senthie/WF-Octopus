@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-07 10:50:57
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-28 14:14:13
+LastEditTime: 2026-04-28 16:58:43
 FilePath: /api/app/main.py
 Description:
 
@@ -16,6 +16,8 @@ from logging.handlers import TimedRotatingFileHandler
 from typing import AsyncGenerator
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordBearer
 
 from app.apis.v1 import router as v1_router
 from app.core.config import settings
@@ -23,7 +25,9 @@ from app.core.logging import configure_logging, get_logger
 from app.core.mongodb import mongodb_client
 from app.core.pg_database import close_db, init_db
 from app.core.redis import redis_client
+from app.middlewares.auth import AuthMiddleware
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
 # Configure logging
 configure_logging()
 logger = get_logger(__name__)
@@ -91,3 +95,13 @@ def get_root():
 
 
 app.include_router(v1_router)
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=settings.cors_allow_credentials,
+    allow_methods=settings.cors_allow_methods,
+    allow_headers=settings.cors_allow_headers,
+)
+# 在 CORS 中间件之后添加认证中间件
+app.add_middleware(AuthMiddleware)
