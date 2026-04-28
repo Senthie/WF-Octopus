@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-24 12:25:21
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-24 17:09:14
+LastEditTime: 2026-04-27 12:20:42
 FilePath: /api/app/models/file/reference.py
 Description:
 
@@ -14,13 +14,14 @@ from uuid import UUID
 from sqlmodel import Field
 
 from app.models.base_mixin import (
+    AuditMixin,
     BaseModel as MyBaseModel,
     SoftDeleteMixin,
     TimestampMixin,
 )
 
 
-class FileReferenceModel(MyBaseModel, TimestampMixin, SoftDeleteMixin, table=True):
+class FileReferenceModel(MyBaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin, table=True):
     """文件引用表 - PostgreSQL中的文件引用。
 
     在PostgreSQL中存储文件的元数据和引用信息。
@@ -33,6 +34,8 @@ class FileReferenceModel(MyBaseModel, TimestampMixin, SoftDeleteMixin, table=Tru
         created_at: 创建时间
         deleted_at: Optional[datetime] = Field(default=None)
         is_deleted: bool = Field(default=False)
+        created_by : UUID
+        updated_by : UUID
 
         file_id: 文件业务ID（UUID，关联到MongoDB）
         filename: 文件名
@@ -40,7 +43,6 @@ class FileReferenceModel(MyBaseModel, TimestampMixin, SoftDeleteMixin, table=Tru
         size_bytes: 文件大小（字节）
         storage_type: 存储类型（MONGODB-小文件/GRIDFS-大文件）
         mongo_id: MongoDB文档ID或GridFS文件ID
-        uploaded_by: 上传者用户ID（逻辑外键）
 
     业务规则：
         - 小文件（< 16MB）直接存储在MongoDB文档中
@@ -58,4 +60,3 @@ class FileReferenceModel(MyBaseModel, TimestampMixin, SoftDeleteMixin, table=Tru
     storage_type: str = Field(
         max_length=20, index=True, description='存储类型（MONGODB-小文件/GRIDFS-大文件）'
     )  # MONGODB, GRIDFS
-    uploaded_by: UUID = Field(index=True, description='Logical FK to users')
