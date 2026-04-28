@@ -17,9 +17,15 @@ from app.models.ai_inspection import (
     InspectionRecordModel,
     InspectionRequirementModel,
 )
+from app.models.auth import PasswordResetModel, RefreshTokenModel, UserModel
+from app.models.file import FileReferenceModel
 
 __all__ = [
     'AiExecuteTaskModel',
     'InspectionRecordModel',
     'InspectionRequirementModel',
+    'UserModel',
+    'RefreshTokenModel',
+    'PasswordResetModel',
+    'FileReferenceModel',
 ]

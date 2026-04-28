@@ -37,8 +37,12 @@ except ImportError:
 
 from app.models import (  # noqa: F401
     AiExecuteTaskModel,
+    FileReferenceModel,
     InspectionRecordModel,
     InspectionRequirementModel,
+    PasswordResetModel,
+    RefreshTokenModel,
+    UserModel,
 )
 
 # this is the Alembic Config object, which provides
