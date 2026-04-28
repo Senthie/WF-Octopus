@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-07 11:36:36
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-27 11:29:46
+LastEditTime: 2026-04-28 17:40:58
 FilePath: /api/app/apis/v1/file.py
 Description: get files api point
 
@@ -29,6 +29,8 @@ from app.core.logging import get_logger
 from app.core.pg_database import get_session
 from app.core.response import ResponseModel, response_base
 from app.enums.response_code_enum import CustomResponseCodeEnum
+from app.middlewares.auth import get_current_user
+from app.models.auth.user import UserModel
 from app.schemas import FileReferenceOut
 from app.services.file_service import FileService
 
@@ -41,6 +43,7 @@ TMP_BASE = TMP_BASE.resolve()  # 转为绝对路径
 
 # 依赖注入定义
 DbSession = Annotated[AsyncSession, Depends(get_session)]
+CurrentUser = Annotated[UserModel, Depends(get_current_user)]
 
 
 def get_organization_service(session: DbSession) -> FileService:
@@ -105,6 +108,7 @@ async def get_tmp_file(
 async def upload_file(
     file: Annotated[UploadFile, File(description='要上传的文件')],
     file_service: FileServiceDep,
+    user: CurrentUser,
 ) -> ResponseModel:
     """上传文件
 
@@ -121,7 +125,7 @@ async def upload_file(
         HTTPException: 上传失败时抛出 500 错误
     """
     try:
-        file_reference = await file_service.upload_file(file=file, user=None)
+        file_reference = await file_service.upload_file(file=file, user=user)
 
         return response_base.success(
             res=CustomResponseCodeEnum.SUCCESS, data=FileReferenceOut.model_validate(file_reference)

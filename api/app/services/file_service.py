@@ -1,5 +1,5 @@
 from typing import AsyncGenerator, Optional
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from fastapi import UploadFile
 from sqlmodel import select
@@ -7,6 +7,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.logging import get_logger
 from app.core.storage import FileNotFoundError as StorageFileNotFoundError, GridFSBackend
+from app.models.auth.user import UserModel
 from app.models.file.reference import FileReferenceModel
 from app.schemas import FileReferenceOut
 from app.schemas.page_schema import PageReq, PageRes
@@ -32,7 +33,7 @@ class FileService:
     async def upload_file(
         self,
         file: UploadFile,
-        user: None,
+        user: UserModel,
     ) -> FileReferenceModel:
         """上传文件
 
@@ -53,11 +54,11 @@ class FileService:
             FileUploadError: 上传失败
         """
         mongo_id = None
-        user_id = str(uuid4())
+        user_id = user.id
         try:
             # 1. 上传到 GridFS
             metadata = {
-                'uploaded_by': user_id,
+                'uploaded_by': str(user_id),
             }
 
             mongo_id = await self.storage.upload(file, metadata=metadata)
@@ -73,8 +74,8 @@ class FileService:
                 content_type=file.content_type or 'application/octet-stream',
                 size_bytes=file_size,
                 storage_type=storage_type,
-                created_by=uuid4(),
-                updated_by=uuid4(),
+                created_by=user_id,
+                updated_by=user_id,
             )
 
             self.session.add(file_reference)
@@ -139,7 +140,7 @@ class FileService:
 
         return file_reference, file_stream
 
-    async def delete_by_id(self, file_id: UUID) -> bool:
+    async def delete_by_id(self, file_id: UUID, user: UserModel) -> bool:
         """删除文件
 
         流程：
@@ -156,7 +157,7 @@ class FileService:
         # 1. 查询文件元数据
         statement = select(FileReferenceModel).where(FileReferenceModel.id == file_id)
         result = await self.session.execute(statement)
-        file_reference = result.scalar_one_or_none()
+        file_reference: FileReferenceModel = result.scalar_one_or_none()  # type: ignore
 
         if not file_reference:
             logger.warning('File not found for deletion', file_id=str(file_id))
@@ -166,7 +167,8 @@ class FileService:
 
         try:
             # 2. 删除 PostgreSQL 记录
-            await self.session.delete(file_reference)
+            file_reference.soft_delete()
+            file_reference.updated_by = user.id
             await self.session.commit()
 
             # 3. 删除 GridFS 文件（最佳努力，失败不回滚）
