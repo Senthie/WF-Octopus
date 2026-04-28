@@ -2,7 +2,7 @@
 Author: kk123047 3254834740@qq.com
 Date: 2025-12-09 18:00:00
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-21 11:46:25
+LastEditTime: 2026-04-28 15:23:29
 FilePath: /api/app/core/config.py
 Description: 应用配置管理
 
@@ -125,5 +125,5 @@ settings = Settings()  # type: ignore
 if __name__ == '__main__':
     print(settings.mongodb_url)
     print(
-        settings.jwt_secret_key
+        settings.redis_url
     )  # Output: redis://localhost:6379/0, default-secret-key-for-development-only-change-in-production
