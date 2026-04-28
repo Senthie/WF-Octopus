@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-27 09:59:21
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-27 11:28:08
+LastEditTime: 2026-04-27 12:19:29
 FilePath: /api/app/schemas/file_schema.py
 Description:
 
@@ -26,6 +26,8 @@ class FileReferenceOut(BaseModel):
     id: UUID = Field(default_factory=uuid4)  # 唯一标识符
     created_at: Optional[datetime] = Field(..., description='创建时间')
     updated_at: Optional[datetime] = Field(..., description='更新时间')
+    created_by: UUID = Field(..., description='Logical FK to users')
+    updated_by: UUID = Field(..., description='Logical FK to users')
 
     gridfs_id: UUID = Field(..., description='GridFS文件ID')
     filename: str = Field(max_length=255, description='文件名')
@@ -34,4 +36,3 @@ class FileReferenceOut(BaseModel):
     storage_type: str = Field(
         ..., description='存储类型（MONGODB-小文件/GRIDFS-大文件）'
     )  # MONGODB, GRIDFS
-    uploaded_by: UUID = Field(..., description='Logical FK to users')
