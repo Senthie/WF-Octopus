@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-20 10:58:16
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-27 10:04:28
+LastEditTime: 2026-04-28 17:25:44
 FilePath: /api/app/services/ai_inspection_service.py
 Description:  AI检测服务类，用于处理AI相关的业务逻辑
 
@@ -19,6 +19,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.core.exceptions import AiInspectionException
 from app.enums import CustomResponseCodeEnum
 from app.models import InspectionRecordModel
+from app.models.auth.user import UserModel
 from app.schemas import InspectionRecordIn
 from app.schemas.ai_inspection_schema import InspectionRecordOut
 from app.schemas.page_schema import PageReq, PageRes
@@ -30,12 +31,14 @@ class AiInspectionService:
 
         self.create_by = uuid.UUID('88ca2407-2e66-4f33-a9b1-c99c1f088ca5')
 
-    async def add(self, inD: InspectionRecordIn) -> InspectionRecordModel:
+    async def add(self, inD: InspectionRecordIn, user: UserModel) -> InspectionRecordModel:
+        user_id = user.id
+
         data = inD.model_dump()  # 或 .dict() 取决于 Pydantic 版本
-        data.setdefault('created_by', self.create_by)  # 例如从上下文中获取
+        data.setdefault('created_by', user_id)  # 例如从上下文中获取
         data.setdefault('ai_detection_execute_id', None)  # 或生成 UUID
         data.setdefault('ai_inspection_excute_id', None)
-        data.setdefault('updated_by', self.create_by)
+        data.setdefault('updated_by', user_id)
 
         inspection_record = InspectionRecordModel(**data)
         self.session.add(inspection_record)
@@ -49,22 +52,22 @@ class AiInspectionService:
         else:
             raise AiInspectionException(CustomResponseCodeEnum.INSPECTION_RECORD_NOT_FOUND)
 
-    async def delete_by_id(self, id: UUID):
+    async def delete_by_id(self, id: UUID, user: UserModel):
         # 根据 ID 获取的记录，然后软删除
         record = await self.session.get_one(InspectionRecordModel, id)
         if record:
             record.soft_delete()
-            record.updated_by = self.create_by
+            record.updated_by = user.id
             await self.session.commit()
 
-    async def update_by_id(self, id: UUID, inD: InspectionRecordIn):
+    async def update_by_id(self, id: UUID, inD: InspectionRecordIn, user: UserModel):
         record = await self.session.get_one(InspectionRecordModel, id)
         if record:
             # 更新记录的属性
             for key, value in inD.model_dump(exclude_unset=True).items():
                 setattr(record, key, value)
 
-            record.updated_by = self.create_by
+            record.updated_by = user.id
             record.touch()
             await self.session.commit()
             return record.model_dump()
