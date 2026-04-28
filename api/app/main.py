@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-07 10:50:57
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-22 17:53:39
+LastEditTime: 2026-04-28 14:14:13
 FilePath: /api/app/main.py
 Description:
 
@@ -22,6 +22,7 @@ from app.core.config import settings
 from app.core.logging import configure_logging, get_logger
 from app.core.mongodb import mongodb_client
 from app.core.pg_database import close_db, init_db
+from app.core.redis import redis_client
 
 # Configure logging
 configure_logging()
@@ -52,8 +53,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         logger.info('MongoDB connected')
 
         # Connect to Redis
-        # await redis_client.connect()
-        # logger.info('Redis connected')
+        await redis_client.connect()
+        logger.info('Redis connected')
 
     except Exception as e:
         logger.error('Failed to initialize application', error=str(e))
