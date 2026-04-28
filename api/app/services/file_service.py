@@ -73,7 +73,8 @@ class FileService:
                 content_type=file.content_type or 'application/octet-stream',
                 size_bytes=file_size,
                 storage_type=storage_type,
-                uploaded_by=uuid4(),
+                created_by=uuid4(),
+                updated_by=uuid4(),
             )
 
             self.session.add(file_reference)

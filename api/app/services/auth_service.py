@@ -1,0 +1,322 @@
+from datetime import datetime
+from typing import Optional
+from uuid import UUID
+
+from sqlmodel import select
+from sqlmodel.ext.asyncio.session import AsyncSession
+
+from app.core.config import settings
+from app.core.exceptions import AuthException
+from app.core.redis import RedisClient
+from app.core.response import ResponseModel, ResponseSchemaModel, response_base
+from app.enums.response_code_enum import CustomResponseCodeEnum
+from app.models.auth import UserModel
+from app.schemas.auth_schema import (
+    LoginIn,
+    LoginOut,
+    RegisterIn,
+    RegisterOut,
+    TokenOut,
+    UserOut,
+)
+from app.utils.password import get_password_hash, verify_password
+from app.utils.token import (
+    TokenType,
+    generate_access_token,
+    generate_refresh_token,
+    verify_token,
+)
+
+
+class AuthService:
+    """Service for handling authentication operations."""
+
+    def __init__(self, db: AsyncSession, redis: RedisClient):
+        """
+        Initialize AuthService.
+
+        Args:
+            db: Async database session
+            redis: Redis client for token management
+        """
+        self.db = db
+        self.redis = redis
+
+    async def register(self, request: RegisterIn) -> ResponseModel:
+        """
+        Register a new user.
+
+        Args:
+            request: Registration request data
+
+        Returns:
+            RegisterResponse with user data and tokens
+
+        Raises:
+            ValueError: If email already exists
+        """
+        # Check if user already exists
+        statement = select(UserModel).where(
+            UserModel.email == request.email,
+            UserModel.is_deleted.is_(False),  # type: ignore
+        )
+        result = await self.db.execute(statement)
+        existing_user = result.scalar_one_or_none()
+
+        if existing_user:
+            raise AuthException(CustomResponseCodeEnum.EMAIL_ALREADY_EXISTS)
+
+        # Create new user
+        password_hash = get_password_hash(request.password)
+        user = UserModel(
+            email=request.email,
+            password_hash=password_hash,
+            name=request.name,
+        )
+
+        self.db.add(user)
+        await self.db.commit()
+        await self.db.refresh(user)
+
+        # Generate tokens
+        tokens = await self._generate_token_pair(user.id)
+
+        return response_base.success(
+            data=RegisterOut(
+                user=UserOut.model_validate(user),
+                tokens=tokens,
+            )
+        )
+
+    async def login(self, request: LoginIn) -> ResponseModel:
+        """
+        Authenticate user and generate tokens.
+
+        Args:
+            request: Login request data
+
+        Returns:
+            LoginResponse with user data and tokens
+
+        Raises:
+            ValueError: If credentials are invalid
+        """
+        # Find user by email
+        statement = select(UserModel).where(
+            UserModel.email == request.email,
+            UserModel.is_deleted.is_(False),  # type: ignore
+        )
+        result = await self.db.execute(statement)
+        user = result.scalar_one_or_none()
+
+        if not user:
+            raise AuthException(CustomResponseCodeEnum.INVALID_CREDENTS)
+        # Verify password
+        if not verify_password(request.password, user.password_hash):
+            raise AuthException(CustomResponseCodeEnum.INVALID_CREDENTS)
+
+        # Generate tokens
+        tokens = await self._generate_token_pair(user.id)
+
+        return response_base.success(
+            data=LoginOut(
+                user=UserOut.model_validate(user),
+                tokens=tokens,
+            )
+        )
+
+    async def refresh_token(self, refresh_token: str) -> ResponseModel:
+        """
+        Refresh access token using refresh token.
+
+        Args:
+            refresh_token: Valid refresh token
+
+        Returns:
+            New token pair
+
+        Raises:
+            ValueError: If refresh token is invalid or revoked
+        """
+        # Verify refresh token
+        payload = verify_token(refresh_token, token_type=TokenType.REFRESH)
+
+        if not payload:
+            raise ValueError('Invalid or expired refresh token')
+
+        user_id = UUID(payload['user_id'])
+
+        # Check if token is revoked
+        revoked_key = f'revoked_token:{refresh_token}'
+        if await self.redis.exists(revoked_key):
+            raise ValueError('Token has been revoked')
+
+        # Verify user still exists
+        user = await self.db.get(UserModel, user_id)
+        if not user or user.is_deleted:
+            raise ValueError('User not found')
+
+        # Generate new token pair
+        tokens = await self._generate_token_pair(user_id)
+
+        return response_base.success(data=tokens)
+
+    async def logout(self, access_token: str, refresh_token: str) -> None:
+        """
+        Logout user by revoking tokens.
+
+        Args:
+            access_token: Access token to revoke
+            refresh_token: Refresh token to revoke
+        """
+        # Revoke both tokens by storing them in Redis with expiration
+        access_payload = verify_token(access_token, token_type=TokenType.ACCESS)
+        refresh_payload = verify_token(refresh_token, token_type=TokenType.REFRESH)
+
+        # Calculate remaining TTL for tokens
+        if access_payload:
+            access_exp = access_payload.get('exp')
+            if access_exp:
+                access_ttl = max(0, access_exp - int(datetime.utcnow().timestamp()))
+                await self.redis.set(
+                    f'revoked_token:{access_token}',
+                    '1',
+                    expire=access_ttl,
+                )
+
+        if refresh_payload:
+            refresh_exp = refresh_payload.get('exp')
+            if refresh_exp:
+                refresh_ttl = max(0, refresh_exp - int(datetime.utcnow().timestamp()))
+                await self.redis.set(
+                    f'revoked_token:{refresh_token}',
+                    '1',
+                    expire=refresh_ttl,
+                )
+
+    async def reset_password(self, email: str) -> None:
+        """
+        Initiate password reset process.
+
+        Args:
+            email: User email address
+
+        Raises:
+            ValueError: If user not found
+        """
+        # Find user by email
+        statement = select(UserModel).where(
+            UserModel.email == email,
+            UserModel.is_deleted.is_(False),  # type: ignore
+        )
+        result = await self.db.execute(statement)
+        user = result.scalar_one_or_none()
+
+        if not user:
+            raise ValueError('User not found')
+
+        # Generate password reset token (valid for 1 hour)
+        reset_token = generate_access_token(
+            user.id, additional_claims={'purpose': 'password_reset'}
+        )
+
+        # Store reset token in Redis with 1 hour expiration
+        await self.redis.set(
+            f'password_reset:{user.id}',
+            reset_token,
+            expire=3600,  # 1 hour
+        )
+
+        # TODO: Send email with reset link
+        # For now, we just store the token
+        # In production, you would send an email with a link like:
+        # https://yourapp.com/reset-password?token={reset_token}
+
+    async def confirm_password_reset(self, token: str, new_password: str) -> None:
+        """
+        Confirm password reset with token.
+
+        Args:
+            token: Password reset token
+            new_password: New password
+
+        Raises:
+            ValueError: If token is invalid or expired
+        """
+        # Verify reset token
+        payload = verify_token(token)
+
+        if not payload or payload.get('purpose') != 'password_reset':
+            raise ValueError('Invalid or expired reset token')
+
+        user_id = UUID(payload['user_id'])
+
+        # Verify token is still in Redis
+        stored_token = await self.redis.get(f'password_reset:{user_id}')
+        if not stored_token or stored_token != token:
+            raise ValueError('Invalid or expired reset token')
+
+        # Get user
+        user = await self.db.get(UserModel, user_id)
+        if not user or user.is_deleted:
+            raise ValueError('User not found')
+
+        # Update password
+        user.password_hash = get_password_hash(new_password)
+        user.updated_at = datetime.utcnow()
+
+        self.db.add(user)
+        await self.db.commit()
+
+        # Delete reset token
+        await self.redis.delete(f'password_reset:{user_id}')
+
+    async def verify_access_token(self, token: str) -> Optional[UserModel]:
+        """
+        Verify access token and return user.
+
+        Args:
+            token: Access token to verify
+
+        Returns:
+            User if token is valid, None otherwise
+        """
+        # Check if token is revoked
+        revoked_key = f'revoked_token:{token}'
+        if await self.redis.exists(revoked_key):
+            return None
+
+        # Verify token
+        payload = verify_token(token, token_type=TokenType.ACCESS)
+
+        if not payload:
+            return None
+
+        user_id = UUID(payload['user_id'])
+
+        # Get user from database
+        user = await self.db.get(UserModel, user_id)
+        if user and user.is_deleted:
+            return None
+
+        return user
+
+    async def _generate_token_pair(self, user_id: UUID) -> TokenOut:
+        """
+        Generate access and refresh token pair.
+
+        Args:
+            user_id: User UUID
+
+        Returns:
+            TokenPair with access and refresh tokens
+        """
+        access_token = generate_access_token(user_id)
+        refresh_token = generate_refresh_token(user_id)
+
+        return TokenOut(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type='bearer',
+            expires_in=settings.access_token_expire_minutes * 60,
+        )
