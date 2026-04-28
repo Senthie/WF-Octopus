@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-07 11:36:36
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-28 17:40:58
+LastEditTime: 2026-04-28 17:52:52
 FilePath: /api/app/apis/v1/file.py
 Description: get files api point
 
@@ -140,9 +140,13 @@ async def upload_file(
 
 
 @router.delete('/{id}', summary='删除检测要求')
-async def delete_by_id(id: UUID, service: FileServiceDep) -> ResponseModel:
+async def delete_by_id(
+    id: UUID,
+    service: FileServiceDep,
+    user: CurrentUser,
+) -> ResponseModel:
     try:
-        res = await service.delete_by_id(id)
+        res = await service.delete_by_id(id, user)
         return response_base.success(
             res=CustomResponseCodeEnum.SUCCESS,
             data=res,
