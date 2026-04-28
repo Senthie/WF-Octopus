@@ -1,0 +1,203 @@
+"""
+Author: '浪川' '1214391613@qq.com'
+Date: 2026-04-27 17:27:26
+LastEditors: '浪川' '1214391613@qq.com'
+LastEditTime: 2026-04-28 15:28:59
+FilePath: /api/app/apis/v1/auth.py
+Description: 认证相关API端点
+
+Copyright (c) 2026 by '浪川' email: '1214391613@qq.com', All Rights Reserved.
+"""
+
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlmodel.ext.asyncio.session import AsyncSession
+
+from app.core.exceptions import AuthException
+from app.core.pg_database import get_session
+from app.core.redis import RedisClient, get_redis
+from app.core.response import ResponseModel, ResponseSchemaModel, response_base
+from app.enums.response_code_enum import CustomResponseCodeEnum
+from app.schemas.auth_schema import (
+    LoginIn,
+    LoginOut,
+    PasswordResetConfirmIn,
+    PasswordResetIn,
+    RefreshTokenIn,
+    RegisterIn,
+    RegisterOut,
+    TokenOut,
+)
+from app.services.auth_service import AuthService
+
+router = APIRouter(prefix='/auth', tags=['Authentication'])
+
+# 依赖注入定义
+DbSession = Annotated[AsyncSession, Depends(get_session)]
+Redis = Annotated[RedisClient, Depends(get_redis)]
+
+
+def get_auth_service(db: DbSession, redis: Redis) -> AuthService:
+    """获取认证服务实例"""
+    return AuthService(db, redis)
+
+
+AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
+
+
+@router.post(
+    '/register',
+    summary='用户注册',
+)
+async def register(
+    request: RegisterIn,
+    auth_service: AuthServiceDep,
+) -> ResponseSchemaModel[RegisterOut] | ResponseModel:
+    """
+    用户注册
+
+    - **email**: 用户邮箱（唯一）
+    - **password**: 密码（至少8位，包含大小写字母和数字）
+    - **name**: 用户姓名
+    """
+    try:
+        response = await auth_service.register(request)
+        return response
+    except AuthException as e:
+        # 返回业务异常的响应格式
+        return response_base.fail(
+            res=e.response_code,
+            data=f'Failed to create workflow: {str(e)}',
+        )
+    except Exception as e:
+        # 返回未知异常的响应格式
+        return response_base.fail(
+            res=CustomResponseCodeEnum.UNKNOWN_ERROR,
+            data=str(e),
+        )
+
+
+@router.post(
+    '/login',
+    summary='用户登录',
+)
+async def login(
+    request: LoginIn,
+    auth_service: AuthServiceDep,
+) -> ResponseSchemaModel[LoginOut] | ResponseModel:
+    """
+    用户登录
+
+    - **email**: 用户邮箱
+    - **password**: 密码
+
+    返回用户信息和访问令牌
+    """
+    try:
+        response = await auth_service.login(request)
+        return response
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(e),
+        ) from e
+
+
+@router.post(
+    '/refresh',
+    summary='刷新访问令牌',
+)
+async def refresh_token(
+    request: RefreshTokenIn,
+    auth_service: AuthServiceDep,
+) -> ResponseSchemaModel[TokenOut] | ResponseModel:
+    """
+    使用刷新令牌获取新的访问令牌
+
+    - **refresh_token**: 刷新令牌
+    """
+    try:
+        response = await auth_service.refresh_token(request.refresh_token)
+        return response
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(e),
+        ) from e
+
+
+@router.post(
+    '/logout',
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary='用户登出',
+)
+async def logout(
+    access_token: str,
+    refresh_token: str,
+    auth_service: AuthServiceDep,
+) -> None:
+    """
+    用户登出，撤销令牌
+
+    - **access_token**: 访问令牌
+    - **refresh_token**: 刷新令牌
+    """
+    await auth_service.logout(access_token, refresh_token)
+
+
+@router.post(
+    '/reset-password',
+    status_code=status.HTTP_200_OK,
+    summary='发起密码重置',
+)
+async def reset_password(
+    request: PasswordResetIn,
+    auth_service: AuthServiceDep,
+) -> dict:
+    """
+    发起密码重置流程
+
+    - **email**: 用户邮箱
+
+    系统会发送重置链接到用户邮箱（实际项目中需要实现邮件发送）
+    """
+    try:
+        await auth_service.reset_password(request.email)
+        return {
+            'message': '密码重置邮件已发送，请查收',
+        }
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        ) from e
+
+
+@router.post(
+    '/confirm-reset-password',
+    status_code=status.HTTP_200_OK,
+    summary='确认密码重置',
+)
+async def confirm_reset_password(
+    request: PasswordResetConfirmIn,
+    auth_service: AuthServiceDep,
+) -> ResponseModel | dict:
+    """
+    使用重置令牌设置新密码
+
+    - **token**: 密码重置令牌
+    - **new_password**: 新密码（至少8位，包含大小写字母和数字）
+    """
+    try:
+        await auth_service.confirm_password_reset(request.token, request.new_password)
+        return {
+            'message': '密码重置成功',
+        }
+    except AuthException as e:
+        return response_base.fail(res=e.response_code)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        ) from e
