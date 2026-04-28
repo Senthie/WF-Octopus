@@ -77,7 +77,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
-    { name = "rich" },
+    { name = "python-multipart" },
 ]
 
 [package.metadata]
@@ -101,7 +101,7 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "rich", specifier = ">=14.3.3" }]
+dev = [{ name = "python-multipart", specifier = ">=0.0.22" }]
 
 [[package]]
 name = "asyncpg"

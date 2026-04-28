@@ -105,4 +105,8 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 
 [dependency-groups]
-dev = ["rich>=14.3.3"]
+dev = [
+    "rich>=14.3.3",
+    "python-multipart>=0.0.22",
+]
+
