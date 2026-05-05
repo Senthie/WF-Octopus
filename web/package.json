@@ -16,6 +16,7 @@
     "@quasar/cli": "^3.0.0",
     "@quasar/extras": "^1.16.4",
     "axios": "^1.13.6",
+    "js-cookie": "^3.0.5",
     "pinia": "^3.0.1",
     "quasar": "^2.16.0",
     "vue": "^3.5.22",
