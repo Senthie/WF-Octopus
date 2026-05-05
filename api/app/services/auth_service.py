@@ -8,7 +8,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.core.config import settings
 from app.core.exceptions import AuthException
 from app.core.redis import RedisClient
-from app.core.response import ResponseModel, ResponseSchemaModel, response_base
+from app.core.response import ResponseModel, response_base
 from app.enums.response_code_enum import CustomResponseCodeEnum
 from app.models.auth import UserModel
 from app.schemas.auth_schema import (
