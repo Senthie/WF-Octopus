@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-27 17:27:26
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-28 15:28:59
+LastEditTime: 2026-05-05 17:30:43
 FilePath: /api/app/apis/v1/auth.py
 Description: 认证相关API端点
 
@@ -97,6 +97,11 @@ async def login(
     try:
         response = await auth_service.login(request)
         return response
+    except AuthException as e:
+        return response_base.fail(
+            res=e.response_code,
+            data=f'Failed to login: {str(e)}',
+        )
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

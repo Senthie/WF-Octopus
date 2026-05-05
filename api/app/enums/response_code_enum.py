@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-03 15:57:55
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-28 14:29:17
+LastEditTime: 2026-05-05 17:36:20
 FilePath: /api/app/enums/response_code_enum.py
 Description:自定义响应代码和信息
 
@@ -43,7 +43,7 @@ class CustomResponseCodeEnum(CustomCodeBase):
     PASSWORD_MISSING_UPPERCASE = (1003, '密码必须包含至少一个大写字母')
     PASSWORD_MISSING_LOWERCASE = (1004, '密码必须包含至少一个小写字母')
     PASSWORD_MISSING_DIGIT = (1005, '密码必须包含至少一个数字')
-    INVALID_CREDENTS = (1006, '无效的凭据')
+    INVALID_CREDENTS = (1006, '账号或密码错误')
     INVALID_TOKEN = (1007, '无效的令牌')
     TOKEN_EXPIRED = (1008, '令牌已过期')
     TOKEN_INVALID = (1009, '无效的令牌')
