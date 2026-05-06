@@ -9,6 +9,15 @@ const routes: RouteRecordRaw[] = [
       { path: 'main', component: () => import('pages/portal/IndexPage.vue') },
     ],
   },
+  {
+    path: '/inspection',
+    component: () => import('layouts/InspectionLayout.vue'),
+    children: [
+      { path: '', component: () => import('pages/inspection/ListPage.vue') },
+      { path: 'record', component: () => import('pages/inspection/RecordPage.vue') },
+      { path: 'requirement', component: () => import('pages/inspection/RequirementPage.vue') },
+    ],
+  },
   // Always leave this as last one,
   // but you can also remove it
   {
