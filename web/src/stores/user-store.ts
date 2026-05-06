@@ -77,7 +77,6 @@ export const useUserStore = defineStore('user', {
             const res = await v1_auth_login(user)
             if (res.code === 200) {
                 this.setUserData(res.data.user, res.data.tokens)
-                this.setUserData(res.data.user, res.data.tokens)
             }
             return res
         },

@@ -14,7 +14,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/InspectionLayout.vue'),
     children: [
       { path: '', component: () => import('pages/inspection/ListPage.vue') },
-      { path: 'record', component: () => import('pages/inspection/RecordPage.vue') },
+      { path: 'record', component: () => import('pages/inspection/AddRecordPage.vue') },
       { path: 'requirement', component: () => import('pages/inspection/RequirementPage.vue') },
     ],
   },
