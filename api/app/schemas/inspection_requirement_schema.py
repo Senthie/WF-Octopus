@@ -2,8 +2,8 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-22 17:27:29
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-23 15:00:56
-FilePath: /api/app/scheams/inspection_requirement_scheam.py
+LastEditTime: 2026-05-06 15:02:26
+FilePath: /api/app/schemas/inspection_requirement_schema.py
 Description:
 
 Copyright (c) 2026 by '浪川' email: '1214391613@qq.com', All Rights Reserved.
@@ -36,6 +36,7 @@ class InspectionRequirementOut(BaseModel):
     created_by: UUID = Field(..., description='创建者')
     created_at: Optional[datetime] = Field(..., description='创建时间')
     updated_at: datetime | None = Field(description='更新时间')
+    updated_by: UUID = Field(..., description='最后更新者')
 
     item_name: str = Field(description='巡检项目名称')
     safety_requirement: str = Field(description='安全要求')
