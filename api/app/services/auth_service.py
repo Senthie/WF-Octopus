@@ -318,5 +318,5 @@ class AuthService:
             access_token=access_token,
             refresh_token=refresh_token,
             token_type='bearer',
-            expires_in=settings.access_token_expire_minutes * 6000,
+            expires_in=settings.access_token_expire_minutes * 60,
         )
