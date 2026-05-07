@@ -55,6 +55,11 @@ export async function v1_update(id: string, request: IAddInspectionRequirement) 
                 type: 'negative',
                 message: response.data.msg,
             })
+        } else {
+            Notify.create({
+                type: 'positive',
+                message: "更新成功",
+            })
         }
 
         return response.data
