@@ -157,3 +157,37 @@ export async function v1_list(
     }
 }
 
+export async function v1_all(
+): Promise<IResponse<IInspectionRequirementRes[]>> {
+    try {
+        const response = await api.post<IResponse<IInspectionRequirementRes[]>>(
+            '/v1/inspection-requirement/all',
+        )
+
+        // 无论成功还是失败都显示消息
+        if (response.data.code !== 200) {
+            Notify.create({
+                type: 'negative',
+                message: response.data.msg || '获取数据失败',
+            })
+        }
+
+        return response.data
+    } catch (error) {
+        const errorMessage = extractErrorMessage(error)
+
+        Notify.create({
+            type: 'negative',
+            message: errorMessage,
+        })
+
+        // 返回一个错误响应格式
+        return {
+            code: 500,
+            msg: errorMessage,
+            data: [],
+            timestamp: new Date().toISOString(),
+        }
+    }
+}
+

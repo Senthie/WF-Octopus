@@ -20,3 +20,14 @@ export const inspection_requirement_res_schema = z.object({
 
 export type IInspectionRequirementRes = z.infer<typeof inspection_requirement_res_schema>
 
+
+
+export const add_inspection_record_schema = z.object({
+    // inspection_requirements_ids: z.array(z.uuidv4()),
+    inspection_requirements_id: z.uuidv4(),
+    image_gridfs_id: z.uuid(),
+    responsible_person: z.string()
+})
+
+
+export type IInspectionRecordIn = z.infer<typeof add_inspection_record_schema>
