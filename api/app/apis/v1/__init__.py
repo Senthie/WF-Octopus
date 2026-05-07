@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-03 12:15:48
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-28 15:27:35
+LastEditTime: 2026-05-07 11:52:22
 FilePath: /api/app/apis/v1/__init__.py
 Description: 模块初始化文件，导入v1版本的API接口
 
@@ -17,6 +17,7 @@ from app.apis.v1 import (
     file as file_api,
     inspection_requirement as inspection_requirement_api,
     pdf as pdf_api,
+    user as user_api,
     zip as zip_api,
 )
 
@@ -33,3 +34,4 @@ router.include_router(pdf_api.router)
 router.include_router(ai_inspection_api.router)
 router.include_router(inspection_requirement_api.router)
 router.include_router(auth_api.router)
+router.include_router(user_api.router)

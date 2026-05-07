@@ -8,8 +8,37 @@ import { IInspectionRequirementRes } from "src/interfaces/IInspection"
 import type { IPageRes } from "src/interfaces/Ipage"
 import { computed, onMounted, ref, watch } from "vue"
 import { useQuasar } from "quasar"
+import { string } from "zod"
+import { v1_get_usernames_by_ids } from "src/apis/user_api"
 const $q = useQuasar()
 
+// 存储用户名信息
+const user_names = ref<Record<string, string>>({})
+
+const set_user_namse = (id: string) => {
+  // 如果 id 在 `user_names` 直接使用
+  if (user_names.value[id]) {
+    console.log(`${id}有用户名${user_names.value[id]}`)
+    return user_names.value[id]
+  } else {
+    return "未知"
+  }
+}
+
+// 获取执行记录的调节的列表
+const get_requirement_list = async () => {
+  const res = await v1_list(page.value) // 刷新表格
+  page.value = res.data
+
+  let ids: Set<string> = new Set()
+  for (let req of res.data.records) {
+    ids.add(req.created_by)
+    ids.add(req.updated_by)
+  }
+  console.log(ids)
+  const res2 = await v1_get_usernames_by_ids(ids)
+  user_names.value = res2.data
+}
 const deleteRow = (row: IInspectionRequirementRes) => {
   $q.dialog({
     title: "确认删除",
@@ -19,8 +48,7 @@ const deleteRow = (row: IInspectionRequirementRes) => {
   }).onOk(async () => {
     // await 删除 API
     await v1_delete(row.id)
-    const res = await v1_list(page.value) // 刷新表格
-    page.value = res.data
+    await get_requirement_list()
   })
 }
 
@@ -47,8 +75,7 @@ const saveEdit = async () => {
   if (res1.code === 200) {
     // 示例：模拟更新成功
     // 更新成功后重新拉取列表
-    const res2 = await v1_list(page.value)
-    page.value = res2.data
+    await get_requirement_list()
   }
 
   // 关闭对话框
@@ -95,14 +122,24 @@ const columns = [
     field: "safety_requirement",
     sortable: true,
   },
-  { name: "created_by", label: "创建人", field: "created_by" },
+  {
+    name: "created_by",
+    label: "创建人",
+    field: "created_by",
+    format: (val: string) => set_user_namse(val),
+  },
   {
     name: "created_at",
     label: "创建日期",
     field: "created_at",
     sortable: true,
   },
-  { name: "updated_by", label: "最后更新人", field: "created_by" },
+  {
+    name: "updated_by",
+    label: "最后更新人",
+    field: "updated_by",
+    format: (val: string) => set_user_namse(val),
+  },
   { name: "updated_at", label: "最后更新日期", field: "updated_at" },
   {
     name: "actions",
@@ -119,8 +156,7 @@ watch(
   async (newSize, oldSize) => {
     if (newSize !== oldSize) {
       page.value.current = 1 // 重置到第一页
-      const res = await v1_list(page.value)
-      page.value = res.data
+      await get_requirement_list()
     }
   },
 )
@@ -130,15 +166,13 @@ watch(
   () => page.value.current,
   async (newCurrent, oldCurrent) => {
     if (newCurrent !== oldCurrent) {
-      const res = await v1_list(page.value)
-      page.value = res.data
+      await get_requirement_list()
     }
   },
 )
 
 onMounted(async () => {
-  const res = await v1_list(page.value)
-  page.value = res.data
+  await get_requirement_list()
 })
 </script>
 <template>
