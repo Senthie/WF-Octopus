@@ -2,13 +2,14 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-22 17:32:02
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-07 10:43:04
+LastEditTime: 2026-05-07 17:12:58
 FilePath: /api/app/services/inspection_requirement_service.py
 Description: service层，用于处理巡检要求相关的业务逻辑。
 
 Copyright (c) 2026 by '浪川' email: '1214391613@qq.com', All Rights Reserved.
 """
 
+from typing import List
 from uuid import UUID
 
 from sqlmodel import select
@@ -100,3 +101,13 @@ class InspectionRequirementService:
         page_res.total = total
 
         return page_res
+
+    async def get_all(self) -> List[InspectionRequirementOut]:
+        statement = (
+            select(InspectionRequirementModel).where(InspectionRequirementModel.is_deleted != True)  # noqa: E712
+        )
+        result = await self.session.execute(statement)
+        irs = result.scalars().all()
+        irs = [InspectionRequirementOut.model_validate(ir) for ir in irs]
+
+        return irs
