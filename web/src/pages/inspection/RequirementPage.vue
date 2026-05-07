@@ -1,14 +1,18 @@
 <script lang="ts" setup>
 import {
+  v1_add,
   v1_delete,
   v1_list,
   v1_update,
 } from "src/apis/inspection_requirement_api"
-import { IInspectionRequirementRes } from "src/interfaces/IInspection"
+import {
+  IAddInspectionRequirement,
+  IInspectionRequirementRes,
+} from "src/interfaces/IInspection"
 import type { IPageRes } from "src/interfaces/Ipage"
 import { computed, onMounted, ref, watch } from "vue"
-import { useQuasar } from "quasar"
-import { string } from "zod"
+import { Notify, useQuasar } from "quasar"
+
 import { v1_get_usernames_by_ids } from "src/apis/user_api"
 const $q = useQuasar()
 
@@ -25,7 +29,7 @@ const set_user_namse = (id: string) => {
   }
 }
 
-// 获取执行记录的调节的列表
+// 获取执行详细的列表
 const get_requirement_list = async () => {
   const res = await v1_list(page.value) // 刷新表格
   page.value = res.data
@@ -35,10 +39,10 @@ const get_requirement_list = async () => {
     ids.add(req.created_by)
     ids.add(req.updated_by)
   }
-  console.log(ids)
   const res2 = await v1_get_usernames_by_ids(ids)
   user_names.value = res2.data
 }
+
 const deleteRow = (row: IInspectionRequirementRes) => {
   $q.dialog({
     title: "确认删除",
@@ -170,6 +174,28 @@ watch(
     }
   },
 )
+const add_data = ref<IAddInspectionRequirement>({
+  item_name: "",
+  safety_requirement: "",
+})
+const add_dialog_visible = ref(false)
+const open_add_dialog = () => {
+  add_data.value = {
+    item_name: "",
+    safety_requirement: "",
+  }
+  add_dialog_visible.value = true
+}
+const add_handle = async () => {
+  const res = await v1_add(add_data.value)
+  if (res.code === 200) {
+    Notify.create({
+      type: "positive",
+      message: "添加成功",
+    })
+    get_requirement_list()
+  }
+}
 
 onMounted(async () => {
   await get_requirement_list()
@@ -181,7 +207,14 @@ onMounted(async () => {
       <q-card-section>
         <div class="text-h6">📋 巡检要求明细表</div>
         <div class="text-subtitle2">巡检要求的增删改查</div>
-        <!-- <q-btn type="primary" @click="showAddDialog = true">新增要求</q-btn> -->
+        <div>
+          <q-btn
+            color="white"
+            text-color="black"
+            label="添加要求"
+            @click="open_add_dialog"
+          />
+        </div>
       </q-card-section>
       <q-card-section>
         <q-table
@@ -273,6 +306,51 @@ onMounted(async () => {
             type="submit"
             color="primary"
             @click="saveEdit"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+    <!-- 新增对话框 -->
+    <q-dialog v-model="add_dialog_visible" :persistent="false">
+      <q-card style="min-width: 500px">
+        <q-card-section>
+          <div class="text-h6">修改巡检要求</div>
+        </q-card-section>
+
+        <q-card-section>
+          <q-form @submit="saveEdit">
+            <q-input
+              v-model="add_data.item_name"
+              label="检测项目名称 *"
+              outlined
+              dense
+              :rules="[(val) => !!val || '项目名称不能为空']"
+            />
+            <q-input
+              v-model="add_data.safety_requirement"
+              label="检测描述"
+              outlined
+              dense
+              type="textarea"
+              rows="3"
+            />
+            <!-- 如果还需要编辑其他字段，继续添加 -->
+          </q-form>
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn
+            flat
+            label="取消"
+            v-close-popup
+            @click="add_dialog_visible = false"
+          />
+          <q-btn
+            flat
+            label="保存"
+            type="submit"
+            color="primary"
+            @click="add_handle"
           />
         </q-card-actions>
       </q-card>
