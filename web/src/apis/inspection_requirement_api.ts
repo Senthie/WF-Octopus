@@ -41,6 +41,46 @@ export async function v1_add(
     }
 }
 
+export async function v1_delete(
+    id: string
+): Promise<IResponse<IInspectionRequirementRes>> {
+    try {
+        const response = await api.delete<IResponse<IInspectionRequirementRes>>(
+            `/v1/inspection-requirement/${id}`,
+        )
+
+        // 无论成功还是失败都显示消息
+        if (response.data.code !== 200) {
+            Notify.create({
+                type: 'negative',
+                message: response.data.msg || '删除失败',
+            })
+        } else {
+            Notify.create({
+                type: 'positive',
+                message: "删除成功",
+            })
+        }
+
+        return response.data
+    } catch (error) {
+        const errorMessage = extractErrorMessage(error)
+
+        Notify.create({
+            type: 'negative',
+            message: errorMessage,
+        })
+
+        // 返回一个错误响应格式
+        return {
+            code: 500,
+            msg: errorMessage,
+            data: {} as IInspectionRequirementRes,
+            timestamp: new Date().toISOString(),
+        }
+    }
+}
+
 export async function v1_update(id: string, request: IAddInspectionRequirement) {
     try {
         request = inspection_requirement_add_schema.parse(request)

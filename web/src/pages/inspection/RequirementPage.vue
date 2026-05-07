@@ -1,5 +1,9 @@
 <script lang="ts" setup>
-import { v1_list, v1_update } from "src/apis/inspection_requirement_api"
+import {
+  v1_delete,
+  v1_list,
+  v1_update,
+} from "src/apis/inspection_requirement_api"
 import { IInspectionRequirementRes } from "src/interfaces/IInspection"
 import type { IPageRes } from "src/interfaces/Ipage"
 import { computed, onMounted, ref, watch } from "vue"
@@ -14,6 +18,7 @@ const deleteRow = (row: IInspectionRequirementRes) => {
     persistent: true,
   }).onOk(async () => {
     // await 删除 API
+    await v1_delete(row.id)
     const res = await v1_list(page.value) // 刷新表格
     page.value = res.data
   })
@@ -146,7 +151,6 @@ onMounted(async () => {
       </q-card-section>
       <q-card-section>
         <q-table
-          title="Treats"
           :rows="page.records"
           :columns="columns"
           row-key="id"
@@ -197,9 +201,6 @@ onMounted(async () => {
           </div>
         </div>
       </q-card-section>
-      <div>
-        {{ page }}
-      </div>
       <q-separator dark />
     </q-card>
     <!-- 编辑对话框 -->
