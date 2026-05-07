@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-22 17:32:02
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-28 17:55:51
+LastEditTime: 2026-05-07 10:43:04
 FilePath: /api/app/services/inspection_requirement_service.py
 Description: service层，用于处理巡检要求相关的业务逻辑。
 
@@ -42,7 +42,7 @@ class InspectionRequirementService:
             InspectionRequirementModel.id == id, InspectionRequirementModel.is_deleted == False
         )
         record = await self.session.execute(statement)
-        record = record.one_or_none()
+        record = record.scalar_one_or_none()
         if record:
             return record.model_dump()
         else:
@@ -54,7 +54,7 @@ class InspectionRequirementService:
         # 根据 ID 获取的记录，然后软删除
         statement = select(InspectionRequirementModel).where(InspectionRequirementModel.id == id)
         record = await self.session.execute(statement)
-        record = record.one_or_none()
+        record = record.scalar_one_or_none()
         if record:
             record.soft_delete()
             record.updated_by = user.id
