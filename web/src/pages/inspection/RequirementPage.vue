@@ -38,17 +38,16 @@ const saveEdit = async () => {
 
   // 调用你实际的更新 API（这里假设为 v1_update）
   // 注意：请根据你的后端接口调整参数
-  await v1_update(currentEditRow.value.id, currentEditRow.value)
-
-  // 示例：模拟更新成功
-  // 更新成功后重新拉取列表
-  const res = await v1_list(page.value)
-  page.value = res.data
+  const res1 = await v1_update(currentEditRow.value.id, currentEditRow.value)
+  if (res1.code === 200) {
+    // 示例：模拟更新成功
+    // 更新成功后重新拉取列表
+    const res2 = await v1_list(page.value)
+    page.value = res2.data
+  }
 
   // 关闭对话框
   showEditDialog.value = false
-  // 可选：弹出成功提示
-  $q.notify({ type: "positive", message: "修改成功" })
 }
 
 // 取消编辑
