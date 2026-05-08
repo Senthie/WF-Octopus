@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-27 09:59:21
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-27 12:19:29
+LastEditTime: 2026-05-08 15:52:51
 FilePath: /api/app/schemas/file_schema.py
 Description:
 
@@ -14,6 +14,8 @@ from typing import Optional
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
+
+from app.enums.gridfs_bucket_name_enum import GridfsBucketNameEnum
 
 
 class FileReferenceOut(BaseModel):
@@ -33,6 +35,7 @@ class FileReferenceOut(BaseModel):
     filename: str = Field(max_length=255, description='文件名')
     content_type: str = Field(max_length=100, description='文件类型')
     size_bytes: int
-    storage_type: str = Field(
-        ..., description='存储类型（MONGODB-小文件/GRIDFS-大文件）'
-    )  # MONGODB, GRIDFS
+    bucket_name_type: GridfsBucketNameEnum = Field(
+        default=GridfsBucketNameEnum.UNKNOWN,
+        description='存储类型（MONGODB-小文件/GRIDFS-大文件）',
+    )

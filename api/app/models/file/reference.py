@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-24 12:25:21
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-27 12:20:42
+LastEditTime: 2026-05-08 15:52:47
 FilePath: /api/app/models/file/reference.py
 Description:
 
@@ -13,6 +13,7 @@ from uuid import UUID
 
 from sqlmodel import Field
 
+from app.enums.gridfs_bucket_name_enum import GridfsBucketNameEnum
 from app.models.base_mixin import (
     AuditMixin,
     BaseModel as MyBaseModel,
@@ -41,7 +42,7 @@ class FileReferenceModel(MyBaseModel, TimestampMixin, SoftDeleteMixin, AuditMixi
         filename: 文件名
         content_type: 文件MIME类型
         size_bytes: 文件大小（字节）
-        storage_type: 存储类型（MONGODB-小文件/GRIDFS-大文件）
+        bucket_name_type: 存放在gridfs的桶名称
         mongo_id: MongoDB文档ID或GridFS文件ID
 
     业务规则：
@@ -54,9 +55,11 @@ class FileReferenceModel(MyBaseModel, TimestampMixin, SoftDeleteMixin, AuditMixi
     __tablename__ = 'file_references'  # type: ignore
 
     gridfs_id: UUID = Field(unique=True, index=True, description='GridFS文件ID')
+    bucket_name_type: GridfsBucketNameEnum = Field(
+        default=GridfsBucketNameEnum.UNKNOWN,
+        index=True,
+        description='存储类型（MONGODB-小文件/GRIDFS-大文件）',
+    )
     filename: str = Field(max_length=255, description='文件名')
     content_type: str = Field(max_length=100, description='文件类型')
     size_bytes: int
-    storage_type: str = Field(
-        max_length=20, index=True, description='存储类型（MONGODB-小文件/GRIDFS-大文件）'
-    )  # MONGODB, GRIDFS
