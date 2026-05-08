@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-07 11:36:36
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-08 10:09:04
+LastEditTime: 2026-05-08 16:46:00
 FilePath: /api/app/apis/v1/file.py
 Description: get files api point
 
@@ -21,10 +21,11 @@ from fastapi import (
     Path as PathParam,
     UploadFile,
 )
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from sqlmodel.ext.asyncio.session import AsyncSession
 from starlette.background import BackgroundTask
 
+from app.core.exceptions import FileException
 from app.core.logging import get_logger
 from app.core.pg_database import get_session
 from app.core.response import ResponseModel, response_base
@@ -157,3 +158,31 @@ async def delete_by_id(
             res=CustomResponseCodeEnum.INTERNAL_SERVER_ERROR,
             data=f'Failed to extract archive: {str(e)}',
         )
+
+
+@router.get('/{id}', summary='下载文件')
+async def download_file(
+    id: UUID,
+    service: FileServiceDep,
+    user: CurrentUser,
+):
+    try:
+        file_model, stream = await service.download_file(id)
+
+        # 动态获取 Content-Type
+        import mimetypes
+
+        media_type = mimetypes.guess_type(file_model.filename)[0] or 'application/octet-stream'
+
+        return StreamingResponse(
+            stream,
+            headers={'Content-Disposition': f'attachment; filename={file_model.filename}'},
+            media_type=media_type,
+        )
+    except FileNotFoundError:
+        return response_base.fail(res=CustomResponseCodeEnum.NOT_FOUND, data='File not found')
+    except FileException as e:
+        return response_base.fail(res=e.response_code, data=e.message)
+    except Exception as e:
+        logger.exception('Unexpected error during file download')
+        return response_base.fail(res=CustomResponseCodeEnum.INTERNAL_SERVER_ERROR, data=str(e))
