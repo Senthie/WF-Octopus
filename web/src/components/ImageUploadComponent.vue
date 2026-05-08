@@ -49,7 +49,7 @@ onMounted(() => {})
 // 组件卸载时清理内存
 onBeforeUnmount(() => {
   if (image_file_store.upload_file) {
-    URL.revokeObjectURL(image_file_store.upload_file.preview_url)
+    image_file_store.removeImage()
   }
 })
 </script>
