@@ -5,8 +5,11 @@ from fastapi import UploadFile
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from app.core.exceptions import FileException
 from app.core.logging import get_logger
-from app.core.storage import FileNotFoundError as StorageFileNotFoundError, GridFSBackend
+from app.core.storage.gridfs import GridFSBackend
+from app.enums import CustomResponseCodeEnum
+from app.enums.gridfs_bucket_name_enum import GridfsBucketNameEnum
 from app.models.auth.user import UserModel
 from app.models.file.reference import FileReferenceModel
 from app.schemas import FileReferenceOut
@@ -28,7 +31,6 @@ class FileService:
             session: 数据库会话
         """
         self.session = session
-        self.storage = GridFSBackend()
 
     async def upload_file(
         self,
@@ -55,17 +57,22 @@ class FileService:
         """
         mongo_id = None
         user_id = user.id
+        bucket_name_type = GridfsBucketNameEnum.get_bucket_by_extension(
+            file.content_type.split('/')[1]
+        )
+        storage = GridFSBackend(bucket_name_type)
         try:
+            # 先获取文件类型，决定将文件扔到什么桶
+
             # 1. 上传到 GridFS
             metadata = {
                 'uploaded_by': str(user_id),
             }
 
-            mongo_id = await self.storage.upload(file, metadata=metadata)
+            mongo_id = await storage.upload(file, metadata=metadata)
 
             # 2. 确定存储类型（根据文件大小）
             file_size = file.size or 0
-            storage_type = 'GRIDFS' if file_size >= 16 * 1024 * 1024 else 'MONGODB'
 
             # 3. 创建 PostgreSQL 元数据记录
             file_reference = FileReferenceModel(
@@ -73,9 +80,9 @@ class FileService:
                 filename=file.filename or 'unknown',
                 content_type=file.content_type or 'application/octet-stream',
                 size_bytes=file_size,
-                storage_type=storage_type,
-                created_by=user_id,
-                updated_by=user_id,
+                bucket_name_type=bucket_name_type,
+                created_by=user_id,  # pyright: ignore[reportCallIssue]
+                updated_by=user_id,  # pyright: ignore[reportCallIssue]
             )
 
             self.session.add(file_reference)
@@ -88,7 +95,7 @@ class FileService:
             # 回滚：删除已上传的 GridFS 文件
             if mongo_id:
                 try:
-                    await self.storage.delete(mongo_id)
+                    await storage.delete(mongo_id)
                     logger.info('Rolled back GridFS file', mongo_id=mongo_id)
                 except Exception as rollback_error:
                     logger.error(
@@ -123,14 +130,14 @@ class FileService:
         # 1. 查询 PostgreSQL 元数据
         statement = select(FileReferenceModel).where(FileReferenceModel.id == file_id)
         result = await self.session.execute(statement)
-        file_reference = result.scalar_one_or_none()
+        file_reference: FileReferenceModel = result.scalar_one_or_none()  # type: ignore
 
         if not file_reference:
             logger.warning('File not found in database', file_id=str(file_id))
-            raise StorageFileNotFoundError(str(file_id))
-
+            raise FileException(CustomResponseCodeEnum.FILE_NOT_FIND, f'{file_id} NOT Finad')
+        storage = GridFSBackend(file_reference.bucket_name_type)
         # 2. 从 GridFS 下载文件流
-        file_stream = self.storage.download(file_reference.mongo_id)
+        file_stream = storage.download(file_reference.gridfs_id)
 
         logger.info(
             'File download started',
@@ -165,6 +172,7 @@ class FileService:
 
         gridfs_id = file_reference.gridfs_id
 
+        storage = GridFSBackend(file_reference.bucket_name_type)
         try:
             # 2. 删除 PostgreSQL 记录
             file_reference.soft_delete()
@@ -173,7 +181,7 @@ class FileService:
 
             # 3. 删除 GridFS 文件（最佳努力，失败不回滚）
             try:
-                await self.storage.delete(gridfs_id)
+                await storage.delete(gridfs_id)
                 logger.info(
                     'File deleted successfully',
                     file_id=str(file_id),
@@ -245,16 +253,3 @@ class FileService:
         page_res.total = total
 
         return page_res
-
-    async def check_file_exists(self, file_id: UUID) -> bool:
-        """检查文件是否存在
-
-        Args:
-            file_id: 文件 ID
-
-        Returns:
-            bool: 存在返回 True
-        """
-        statement = select(FileReferenceModel.id).where(FileReferenceModel.id == file_id)
-        result = await self.session.execute(statement)
-        return result.scalar_one_or_none() is not None
