@@ -7,8 +7,10 @@ import {
 } from "src/interfaces/IInspection"
 import { v1_all as inspection_requirement_v1_all } from "src/apis/inspection_requirement_api"
 import { computed, onMounted, ref } from "vue"
-const $q = useQuasar()
+import { useImageFileStore } from "src/stores/file-store"
 
+const $q = useQuasar()
+const image_file_store = useImageFileStore()
 const record_data = ref<IInspectionRecordIn>({
   image_gridfs_id: "",
   responsible_person: "",
@@ -47,12 +49,14 @@ const get_safety_requirement_by_id = computed(() => {
   }
 })
 
-const onSubmit = () => {
+const onSubmit = async () => {
+  // 先上传照片
+  const file_id = await image_file_store.post_in_server()
   $q.notify({
     color: "green-4",
     textColor: "white",
     icon: "cloud_done",
-    message: "Submitted",
+    message: `${file_id}`,
   })
 }
 

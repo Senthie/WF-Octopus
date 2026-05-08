@@ -1,27 +1,14 @@
 <script setup lang="ts">
-import { ref, computed, onBeforeUnmount } from "vue"
+import { useImageFileStore } from "src/stores/file-store"
 
-// ---------- 类型定义 ----------
-interface UploadedImage {
-  file: File
-  previewUrl: string
-}
+import { ref, computed, onBeforeUnmount, onMounted } from "vue"
 
+const image_file_store = useImageFileStore()
 // ---------- 响应式状态 ----------
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const dropZoneRef = ref<HTMLElement | null>(null)
-const uploaded = ref<UploadedImage | null>(null)
-const isDragover = ref(false)
 
-// ---------- 计算属性 ----------
-const imagePreviewUrl = computed(() => uploaded.value?.previewUrl ?? null)
-const fileSizeText = computed(() => {
-  if (!uploaded.value) return ""
-  const bytes = uploaded.value.file.size
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
-})
+const isDragover = ref(false)
 
 // ---------- 方法 ----------
 const triggerUpload = () => {
@@ -31,43 +18,9 @@ const triggerUpload = () => {
 const handleFileChange = (event: Event) => {
   const target = event.target as HTMLInputElement
   const file = target.files?.[0]
-  if (file) processFile(file)
+  if (file) image_file_store.processFile(file)
   // 重置 input 以允许重复选择同一文件
   target.value = ""
-}
-
-const processFile = (file: File) => {
-  const allowedTypes = [
-    "image/jpeg",
-    "image/png",
-    "image/gif",
-    "image/webp",
-    "image/svg+xml",
-  ]
-  if (!allowedTypes.includes(file.type)) {
-    alert("请上传 JPG、PNG、GIF、WebP 或 SVG 格式的图片")
-    return
-  }
-  if (file.size > 10 * 1024 * 1024) {
-    alert("图片大小不能超过 10MB")
-    return
-  }
-
-  // 释放旧的预览 URL
-  if (uploaded.value) {
-    URL.revokeObjectURL(uploaded.value.previewUrl)
-  }
-
-  uploaded.value = {
-    file,
-    previewUrl: URL.createObjectURL(file),
-  }
-}
-
-const removeImage = () => {
-  if (!uploaded.value) return
-  URL.revokeObjectURL(uploaded.value.previewUrl)
-  uploaded.value = null
 }
 
 // 拖拽事件
@@ -88,13 +41,15 @@ const onDragLeave = (event: DragEvent) => {
 const onDrop = (event: DragEvent) => {
   isDragover.value = false
   const file = event.dataTransfer?.files?.[0]
-  if (file) processFile(file)
+  if (file) image_file_store.processFile(file)
 }
+
+onMounted(() => {})
 
 // 组件卸载时清理内存
 onBeforeUnmount(() => {
-  if (uploaded.value) {
-    URL.revokeObjectURL(uploaded.value.previewUrl)
+  if (image_file_store.upload_file) {
+    URL.revokeObjectURL(image_file_store.upload_file.preview_url)
   }
 })
 </script>
@@ -111,7 +66,7 @@ onBeforeUnmount(() => {
       ref="dropZoneRef"
       class="upload-zone"
       :class="{
-        'upload-zone--has-image': imagePreviewUrl,
+        'upload-zone--has-image': image_file_store.imagePreviewUrl,
         'upload-zone--dragover': isDragover,
       }"
       @click="triggerUpload"
@@ -120,7 +75,7 @@ onBeforeUnmount(() => {
       @drop.prevent="onDrop"
     >
       <!-- 占位符 -->
-      <div v-if="!imagePreviewUrl" class="upload-placeholder">
+      <div v-if="!image_file_store.imagePreviewUrl" class="upload-placeholder">
         <div class="upload-placeholder__icon">
           <svg
             viewBox="0 0 80 80"
@@ -181,7 +136,7 @@ onBeforeUnmount(() => {
 
       <!-- 预览图 -->
       <div v-else class="preview-wrapper">
-        <img :src="imagePreviewUrl" alt="预览图片" />
+        <img :src="image_file_store.imagePreviewUrl" alt="预览图片" />
         <div class="preview-overlay">
           <button
             class="btn btn--replace"
@@ -205,7 +160,7 @@ onBeforeUnmount(() => {
           <button
             class="btn btn--delete"
             title="删除图片"
-            @click.stop="removeImage"
+            @click.stop="image_file_store.removeImage"
           >
             <svg
               width="16"
@@ -238,13 +193,15 @@ onBeforeUnmount(() => {
 
     <!-- 底部信息 -->
     <div class="upload-info">
-      <span v-if="imagePreviewUrl" class="upload-info__status">
+      <span v-if="image_file_store.imagePreviewUrl" class="upload-info__status">
         <span class="status-dot"></span> 已上传
       </span>
       <span v-else class="upload-info__status upload-info__status--idle"
         >等待上传</span
       >
-      <span class="upload-info__size">{{ fileSizeText || "最大 10MB" }}</span>
+      <span class="upload-info__size">{{
+        image_file_store.file_size_text || "最大 10MB"
+      }}</span>
     </div>
   </div>
 </template>
