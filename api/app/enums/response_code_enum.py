@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-03 15:57:55
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-05 17:36:20
+LastEditTime: 2026-05-08 16:42:34
 FilePath: /api/app/enums/response_code_enum.py
 Description:自定义响应代码和信息
 
@@ -54,3 +54,6 @@ class CustomResponseCodeEnum(CustomCodeBase):
 
     # 巡检要求
     INSPECTION_REQUIREMENT_NOT_FOUND = (3001, '巡检要求未找到')
+
+    # File sever
+    FILE_NOT_FIND = (4001, '文件未发现')
