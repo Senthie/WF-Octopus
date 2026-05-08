@@ -12,7 +12,7 @@ import { useImageFileStore } from "src/stores/file-store"
 const $q = useQuasar()
 const image_file_store = useImageFileStore()
 const record_data = ref<IInspectionRecordIn>({
-  image_gridfs_id: "",
+  file_id: "",
   responsible_person: "",
   inspection_requirements_id: "",
 })
@@ -62,7 +62,7 @@ const onSubmit = async () => {
 
 const onReset = () => {
   record_data.value = {
-    image_gridfs_id: "",
+    file_id: "",
     responsible_person: "",
     inspection_requirements_id: "",
   }

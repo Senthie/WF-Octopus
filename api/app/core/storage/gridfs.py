@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-23 16:28:28
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-27 12:04:10
+LastEditTime: 2026-05-08 12:10:20
 FilePath: /api/app/core/storage/gridfs.py
 Description: MongoDB GridFS 存储后端实现
 
@@ -12,7 +12,6 @@ GridFS 自动将大文件分块存储，支持流式读写。
 Copyright (c) 2026 by '浪川' email: '1214391613@qq.com', All Rights Reserved.
 """
 
-from datetime import datetime
 from typing import Any, AsyncGenerator, Optional
 from uuid import UUID, uuid4
 
@@ -30,6 +29,7 @@ from app.core.storage.exceptions import (
     FileUploadError,
     StorageConnectionError,
 )
+from app.utils.timezone_help import tz_helper
 
 logger = get_logger(__name__)
 
@@ -91,7 +91,7 @@ class GridFSBackend(StorageBackend):
             file_metadata = {
                 'filename': file.filename,
                 'content_type': file.content_type,
-                'upload_date': datetime.utcnow(),
+                'upload_date': tz_helper.get_current_time(),
                 **(metadata or {}),
             }
             # 生成 UUID 作为 _id

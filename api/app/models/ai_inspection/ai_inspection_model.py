@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-17 10:41:34
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-21 15:44:42
+LastEditTime: 2026-05-08 12:18:28
 FilePath: /api/app/models/ai_inspection/ai_inspection_model.py
 Description:Ai 巡检的模型
 
@@ -30,7 +30,7 @@ class AiExecuteTaskModel(MyBaseModel, TimestampMixin, SoftDeleteMixin, AuditMixi
 
     :param model: 要执行的任务模型
     :param prompt: 要执行的提示语
-    :param image_gridfs_id: 图片id
+    :param file_id: file表的id
     :param execute_status: Ai 执行的状态
     :param record: AI结果返回
     """
@@ -38,7 +38,7 @@ class AiExecuteTaskModel(MyBaseModel, TimestampMixin, SoftDeleteMixin, AuditMixi
     __tablename__ = 'ai_execute_task'  # type: ignore
     model: str = Field(description='要执行的任务模型')
     prompt: str = Field(sa_column=Column(TEXT), description='要执行的提示语')
-    image_gridfs_id: str = Field(description='图片id')
+    file_id: UUID = Field(description='图片id')
 
     execute_status: TaskStatusEnum = Field(
         default=TaskStatusEnum.PENDING, description='Ai 执行的状态'
@@ -69,7 +69,7 @@ class InspectionRecordModel(MyBaseModel, TimestampMixin, SoftDeleteMixin, AuditM
 
     :param inspection_requirements_id: 巡检要求明细表的唯一标识符
     :param status: 巡检的状态
-    :param image_gridfs_id: 图片id
+    :param file_id: 图片id
     :param ai_detection_execute_id: AI 执行图的唯一标识符
 
     """
@@ -80,7 +80,7 @@ class InspectionRecordModel(MyBaseModel, TimestampMixin, SoftDeleteMixin, AuditM
     status: InspectionResultEnum = Field(
         default=InspectionResultEnum.NORMAL, description='巡检的状态'
     )
-    image_gridfs_id: str = Field(description='图片id')
+    file_id: UUID = Field(description='图片id')
 
     ai_detection_execute_id: Optional[UUID] = Field(description='AI 执行图片分析的结果')
     ai_inspection_excute_id: Optional[UUID] = Field(description='Ai 提取的特定巡检项目结果的id')

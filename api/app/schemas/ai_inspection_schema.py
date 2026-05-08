@@ -2,8 +2,8 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-16 16:51:01
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-23 15:01:00
-FilePath: /api/app/scheams/ai_inspection_scheam.py
+LastEditTime: 2026-05-08 12:16:31
+FilePath: /api/app/schemas/ai_inspection_schema.py
 Description: Ai 巡检的web 输入输出模型
 
 Copyright (c) 2026 by '浪川' email: '1214391613@qq.com', All Rights Reserved.
@@ -31,7 +31,7 @@ class InspectionRecordOut(BaseModel):
     status: InspectionResultEnum = Field(
         default=InspectionResultEnum.NORMAL, description='巡检的状态'
     )
-    image_gridfs_id: str = Field(description='图片id')
+    file_id: str = Field(description='图片id')
 
     ai_detection_execute_id: Optional[UUID] = Field(..., description='AI 执行图片分析的结果')
     ai_inspection_excute_id: Optional[UUID] = Field(
@@ -50,5 +50,5 @@ class InspectionRecordIn(BaseModel):
     """
 
     inspection_requirements_id: UUID = Field(..., description=' 巡检要求明细表的唯一标识符')
-    image_gridfs_id: str = Field(description='图片id')
+    file_id: str = Field(description='图片id')
     responsible_person: str = Field(..., description='区域负责人')
