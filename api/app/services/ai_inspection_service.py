@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-20 10:58:16
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-28 17:25:44
+LastEditTime: 2026-05-08 17:21:00
 FilePath: /api/app/services/ai_inspection_service.py
 Description:  AI检测服务类，用于处理AI相关的业务逻辑
 
@@ -31,7 +31,7 @@ class AiInspectionService:
 
         self.create_by = uuid.UUID('88ca2407-2e66-4f33-a9b1-c99c1f088ca5')
 
-    async def add(self, inD: InspectionRecordIn, user: UserModel) -> InspectionRecordModel:
+    async def add(self, inD: InspectionRecordIn, user: UserModel) -> InspectionRecordOut:
         user_id = user.id
 
         data = inD.model_dump()  # 或 .dict() 取决于 Pydantic 版本
@@ -43,14 +43,15 @@ class AiInspectionService:
         inspection_record = InspectionRecordModel(**data)
         self.session.add(inspection_record)
         await self.session.commit()
-        return inspection_record
 
-    async def get_by_id(self, id: UUID):
+        return InspectionRecordOut.model_validate(inspection_record)
+
+    async def get_by_id(self, id: UUID) -> InspectionRecordOut:
         record = await self.session.get(InspectionRecordModel, id)
-        if record:
-            return record.model_dump()
-        else:
+        if not record:
             raise AiInspectionException(CustomResponseCodeEnum.INSPECTION_RECORD_NOT_FOUND)
+
+        return InspectionRecordOut.model_validate(record)
 
     async def delete_by_id(self, id: UUID, user: UserModel):
         # 根据 ID 获取的记录，然后软删除

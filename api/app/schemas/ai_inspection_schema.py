@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-16 16:51:01
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-08 12:16:31
+LastEditTime: 2026-05-08 17:44:59
 FilePath: /api/app/schemas/ai_inspection_schema.py
 Description: Ai 巡检的web 输入输出模型
 
@@ -31,16 +31,17 @@ class InspectionRecordOut(BaseModel):
     status: InspectionResultEnum = Field(
         default=InspectionResultEnum.NORMAL, description='巡检的状态'
     )
-    file_id: str = Field(description='图片id')
+    file_id: UUID = Field(description='图片id')
 
     ai_detection_execute_id: Optional[UUID] = Field(..., description='AI 执行图片分析的结果')
     ai_inspection_excute_id: Optional[UUID] = Field(
         ..., description='Ai 提取的特定巡检项目结果的id'
     )
-
     responsible_person: str = Field(..., description='区域负责人')
+
     created_by: UUID = Field(..., description='创建者')
     created_at: Optional[datetime] = Field(..., description='创建时间')
+    updated_by: UUID = Field(..., description='最后更新人时间')
     updated_at: datetime | None = Field(description='更新时间')
 
 
@@ -50,5 +51,5 @@ class InspectionRecordIn(BaseModel):
     """
 
     inspection_requirements_id: UUID = Field(..., description=' 巡检要求明细表的唯一标识符')
-    file_id: str = Field(description='图片id')
+    file_id: UUID = Field(description='图片id')
     responsible_person: str = Field(..., description='区域负责人')

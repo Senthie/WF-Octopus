@@ -2,12 +2,14 @@
 import { useQuasar } from "quasar"
 import ImageUploadComponent from "src/components/ImageUploadComponent.vue"
 import {
+  add_inspection_record_schema,
   IInspectionRecordIn,
   IInspectionRequirementRes,
 } from "src/interfaces/IInspection"
 import { v1_all as inspection_requirement_v1_all } from "src/apis/inspection_requirement_api"
 import { computed, onMounted, ref } from "vue"
 import { useImageFileStore } from "src/stores/file-store"
+import { v1_add as inspection_record_v1_add } from "src/apis/inspection_record_api"
 
 const $q = useQuasar()
 const image_file_store = useImageFileStore()
@@ -52,12 +54,11 @@ const get_safety_requirement_by_id = computed(() => {
 const onSubmit = async () => {
   // 先上传照片
   const file_id = await image_file_store.post_in_server()
-  $q.notify({
-    color: "green-4",
-    textColor: "white",
-    icon: "cloud_done",
-    message: `${file_id}`,
-  })
+  if (file_id !== "" && file_id !== undefined) {
+    record_data.value.file_id = file_id
+    const req = add_inspection_record_schema.parse(record_data.value)
+    await inspection_record_v1_add(req)
+  }
 }
 
 const onReset = () => {
@@ -81,9 +82,10 @@ onMounted(async () => {
         <q-select
           v-model="record_data.inspection_requirements_id"
           :options="inspection_requirement_options"
-          label="请选择巡检类型"
+          label="巡检类型"
           emit-value
           map-options
+          :rules="[(val) => (val && val.length > 0) || '请选择巡检类型']"
         />
         <q-input
           v-model="get_safety_requirement_by_id"
@@ -99,6 +101,7 @@ onMounted(async () => {
           label="区域负责人"
           outlined
           dense
+          :rules="[(val) => (val && val.length > 0) || '请输入区域负责人']"
         />
         <div>
           <q-btn label="提交" type="submit" color="primary" />

@@ -31,3 +31,22 @@ export const add_inspection_record_schema = z.object({
 
 
 export type IInspectionRecordIn = z.infer<typeof add_inspection_record_schema>
+
+export const inspection_record_out_schema = z.object({
+    id: z.uuidv4(),
+    created_by: z.uuidv4(),
+    created_at: z.date(),
+
+    updated_by: z.uuidv4(),
+    updated_at: z.date(),
+
+    inspection_requirements_id: z.uuidv4(),
+    status: z.enum(['normal', 'requires_correction', 'in_progress', 'corrected']),
+    file_id: z.uuid(),
+    ai_detection_execute_id: z.uuid(),
+    ai_inspection_excute_id: z.uuid(),
+    responsible_person: z.string()
+})
+
+export type InspectionRecordOut = z.infer<typeof inspection_record_out_schema>
+
