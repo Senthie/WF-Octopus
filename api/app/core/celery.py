@@ -41,8 +41,8 @@ celery_app.autodiscover_tasks(['app.tasks'], force=True)
 
 # 手动导入任务模块以确保注册
 try:
-    from app.tasks import example_task
+    from app.tasks import example_task, ollama_task
 
-    print(f'Successfully imported tasks: {celery_app.tasks}')
+    print(f'Successfully imported tasks: {list(celery_app.tasks.keys())}')
 except ImportError as e:
     print(f'Failed to import tasks: {e}')

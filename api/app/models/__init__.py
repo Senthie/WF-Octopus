@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-20 15:59:41
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-20 16:04:48
+LastEditTime: 2026-05-11 12:22:06
 FilePath: /api/app/models/__init__.py
 Description:数据模型包 - 导出所有数据库模型。
 
@@ -18,6 +18,7 @@ from app.models.ai_inspection import (
     InspectionRequirementModel,
 )
 from app.models.auth import PasswordResetModel, RefreshTokenModel, UserModel
+from app.models.celery import CeleryTaskRecordModel, CeleryTaskStatus
 from app.models.file import FileReferenceModel
 
 __all__ = [
@@ -28,4 +29,6 @@ __all__ = [
     'RefreshTokenModel',
     'PasswordResetModel',
     'FileReferenceModel',
+    'CeleryTaskRecordModel',
+    'CeleryTaskStatus',
 ]

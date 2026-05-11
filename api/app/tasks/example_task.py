@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-05-09 14:57:09
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-11 10:29:49
+LastEditTime: 2026-05-11 17:10:26
 FilePath: /api/app/tasks/example_task.py
 Description:
 
@@ -29,11 +29,11 @@ def example_task(name: str, seconds: int = 5):
 
 # 如果你的任务需要调用异步代码（如 httpx，async DB 操作）
 # 可以使用 asyncio.run() 包装，或者将 Celery worker 运行在 asyncio 池中（高级）
-@celery_app.task(name='async_demo')
-def async_demo(name: str, seconds: int = 5):
+@celery_app.task(name='async_demo', bind=True)
+def async_demo(self, name: str, seconds: int = 5):
     async def _fetch():
         time.sleep(seconds)
-
+        logger.info(f'async_demo: Hello {name}, task finished after {seconds} seconds.')
         return f'Hello {name}, task finished after {seconds} seconds.'
 
     return asyncio.run(_fetch())
