@@ -9,9 +9,9 @@ Description: 时区工具模块 用来规范获取时间和输出时间
 Copyright (c) 2026 by Senthie email: seemoon2077@gmail.com, All Rights Reserved.
 """
 
+from datetime import datetime
 import os
 import time
-from datetime import datetime
 from typing import Optional
 
 try:
@@ -66,7 +66,7 @@ class TimezoneHelper:
         elif PYTZ_AVAILABLE:
             return pytz.UTC.localize(dt).astimezone(pytz.timezone(timezone))
         else:
-            raise ImportError("需要安装 zoneinfo (Python 3.9+) 或 pytz 库")
+            raise ImportError('需要安装 zoneinfo (Python 3.9+) 或 pytz 库')
 
     def format_time(self, dt: datetime, fmt: str | None = None) -> str:
         """
@@ -80,7 +80,7 @@ class TimezoneHelper:
             格式化后的时间字符串
         """
         if fmt is None:
-            fmt = "%Y-%m-%d %H:%M:%S %Z (UTC%z)"
+            fmt = '%Y-%m-%d %H:%M:%S %Z (UTC%z)'
 
         return dt.strftime(fmt)
 
@@ -91,18 +91,18 @@ class TimezoneHelper:
         Returns:
             时区名称字符串
         """
-        if os.name == "nt":  # Windows
+        if os.name == 'nt':  # Windows
             # Windows系统，使用tzlocal或返回UTC
             try:
                 import tzlocal
 
                 return str(tzlocal.get_localzone())
             except ImportError:
-                return "UTC"
+                return 'UTC'
         else:  # Linux/macOS
             # 从环境变量获取
-            if "TZ" in os.environ:
-                return os.environ["TZ"]
+            if 'TZ' in os.environ:
+                return os.environ['TZ']
 
             # 从time模块获取
             tz_name = time.tzname[0]
@@ -111,14 +111,14 @@ class TimezoneHelper:
 
             # 转换为标准时区名称（简化版，实际需要更复杂的映射）
             tz_mapping = {
-                "CST": "Asia/Shanghai",
-                "EST": "America/New_York",
-                "PST": "America/Los_Angeles",
-                "GMT": "UTC",
-                "UTC": "UTC",
+                'CST': 'Asia/Shanghai',
+                'EST': 'America/New_York',
+                'PST': 'America/Los_Angeles',
+                'GMT': 'UTC',
+                'UTC': 'UTC',
             }
 
-            return tz_mapping.get(tz_name, "UTC")
+            return tz_mapping.get(tz_name, 'UTC')
 
     def convert_timezone(self, dt: datetime, to_tz: str) -> datetime:
         """
@@ -134,7 +134,7 @@ class TimezoneHelper:
         if dt.tzinfo is None:
             # 如果原始时间没有时区信息，假设为UTC
             if ZONEINFO_AVAILABLE:
-                dt = dt.replace(tzinfo=ZoneInfo("UTC"))
+                dt = dt.replace(tzinfo=ZoneInfo('UTC'))
             elif PYTZ_AVAILABLE:
                 dt = pytz.UTC.localize(dt)
 
@@ -144,7 +144,7 @@ class TimezoneHelper:
         elif PYTZ_AVAILABLE:
             return dt.astimezone(pytz.timezone(to_tz))
         else:
-            raise ImportError("需要安装 zoneinfo (Python 3.9+) 或 pytz 库")
+            raise ImportError('需要安装 zoneinfo (Python 3.9+) 或 pytz 库')
 
     @staticmethod
     def get_all_timezones() -> list:
@@ -161,34 +161,34 @@ class TimezoneHelper:
         elif PYTZ_AVAILABLE:
             return pytz.all_timezones
         else:
-            return ["UTC"]
+            return ['UTC']
 
 
 tz_helper = TimezoneHelper()
 # 使用示例
-if __name__ == "__main__":
+if __name__ == '__main__':
     # 创建时区助手实例
 
     # 获取当前时间（使用默认时区）
     current_time = tz_helper.get_current_time()
-    print(f"当前时间: {tz_helper.format_time(current_time)}")
+    print(f'当前时间: {tz_helper.format_time(current_time)}')
 
     # 获取UTC时间
-    utc_time = tz_helper.get_current_time("UTC")
-    print(f"UTC时间: {tz_helper.format_time(utc_time)}")
+    utc_time = tz_helper.get_current_time('UTC')
+    print(f'UTC时间: {tz_helper.format_time(utc_time)}')
 
     # 获取纽约时间
-    ny_time = tz_helper.get_current_time("America/New_York")
-    print(f"纽约时间: {tz_helper.format_time(ny_time)}")
+    ny_time = tz_helper.get_current_time('America/New_York')
+    print(f'纽约时间: {tz_helper.format_time(ny_time)}')
 
     # 获取北京时间
-    ny_time = tz_helper.get_current_time("Asia/Shanghai")
-    print(f"北京时间: {tz_helper.format_time(ny_time)}")
+    ny_time = tz_helper.get_current_time('Asia/Shanghai')
+    print(f'北京时间: {tz_helper.format_time(ny_time)}')
 
     # 时区转换示例
-    converted = tz_helper.convert_timezone(utc_time, "Asia/Shanghai")
-    print(f"UTC转换为北京时间: {tz_helper.format_time(converted)}")
+    converted = tz_helper.convert_timezone(utc_time, 'Asia/Shanghai')
+    print(f'UTC转换为北京时间: {tz_helper.format_time(converted)}')
 
     # 自定义格式
-    custom_format = "%A, %B %d, %Y %I:%M:%S %p %Z"
-    print(f"自定义格式: {tz_helper.format_time(current_time, custom_format)}")
+    custom_format = '%A, %B %d, %Y %I:%M:%S %p %Z'
+    print(f'自定义格式: {tz_helper.format_time(current_time, custom_format)}')
