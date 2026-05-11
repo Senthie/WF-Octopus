@@ -2,7 +2,7 @@
 Author: kk123047 3254834740@qq.com
 Date: 2025-12-09 18:00:00
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-28 15:23:29
+LastEditTime: 2026-05-09 11:27:46
 FilePath: /api/app/core/config.py
 Description: 应用配置管理
 
@@ -58,8 +58,8 @@ class Settings(BaseSettings):
     redis_max_connections: int = 10
 
     # Celery
-    celery_broker_url: Optional[str] = None
-    celery_result_backend: Optional[str] = None
+    celery_broker_url: str = ''
+    celery_result_backend: str = ''
 
     # Sentry
     sentry_dsn: Optional[str] = None
@@ -87,6 +87,10 @@ class Settings(BaseSettings):
     smtp_password: str = ''
     from_email: str = 'noreply@yourcompany.com'
     frontend_url: str = 'https://yourapp.com'
+
+    # OLLAMA 配置
+    ollama_host: str = 'http://localhost:11434'
+    ollama_model: str = 'qwen2:latest'
 
     @field_validator('celery_broker_url', mode='before')
     @classmethod

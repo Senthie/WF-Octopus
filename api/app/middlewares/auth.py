@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-28 15:56:27
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-28 16:04:03
+LastEditTime: 2026-05-09 15:17:14
 FilePath: /api/app/middlewares/auth.py
 Description:
 
@@ -49,6 +49,8 @@ class AuthMiddleware(BaseHTTPMiddleware):
             '/api/v1/auth/refresh',
             '/api/v1/auth/reset-password',
             '/api/v1/auth/confirm-reset-password',
+            '/celery/test',
+            '/celery/fetch',
         ]
 
         if request.url.path in public_paths:
