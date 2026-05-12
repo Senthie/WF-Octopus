@@ -7,7 +7,6 @@ requires-python = ">=3.12"
 dependencies = [
     "alembic==1.18.4",
     "asyncpg>=0.31.0",
-    "celery>=5.6.3",
     "cryptography>=47.0.0",
     "fastapi[standard]>=0.135.3",
     "motor>=3.7.1",
@@ -20,10 +19,14 @@ dependencies = [
     "python-dotenv>=1.2.2",
     "redis>=7.4.0",
     "requests>=2.33.1",
+    "rich>=14.3.3",
     "sqlmodel>=0.0.38",
     "structlog>=25.5.0",
     "tzlocal>=5.3.1",
+    "dramatiq>=1.30.0",
+    "uvloop>=0.17.0; sys_platform != 'win32'", # ← 关键修改
 ]
+
 [tool.black]
 line-length = 100
 target-version = ["py312"]
@@ -107,8 +110,4 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 
 [dependency-groups]
-dev = [
-    "rich>=14.3.3",
-    "python-multipart>=0.0.22",
-]
-
+dev = ["rich>=14.3.3", "python-multipart>=0.0.22"]

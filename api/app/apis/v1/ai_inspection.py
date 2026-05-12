@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-16 16:33:10
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-12 14:32:51
+LastEditTime: 2026-05-12 17:49:54
 FilePath: /api/app/apis/v1/ai_inspection.py
 Description: 巡检接口点
 
@@ -27,7 +27,9 @@ from app.schemas import InspectionRecordIn
 from app.schemas.ai_inspection_schema import InspectionRecordOut
 from app.schemas.page_schema import PageReq, PageRes
 from app.services import AiInspectionService, CeleryTaskRecordService
-from app.tasks.inspection import ai_inspection_task
+
+# Use Dramatiq async actor instead of Celery
+from app.tasks.inspection_dramatiq import ai_inspection_task_async
 
 router = APIRouter(prefix='/ai-inspection', tags=['ai inspection v1'])
 logger = get_logger(__name__)
@@ -67,16 +69,17 @@ async def add(
         # 优先创建一个空的识别数据
         celery_record = await celery_service.create_task_record(
             task_id='',
-            task_name='ollama_generate',
+            task_name='ai_inspection_task',
             args=[],
             kwargs={},
         )
         # 获取数据
         record_out, inspection_requirement_out = await service.add(inD, user, celery_record.id)
-        ai_inspection_task.delay(
-            record=record_out.model_dump_json(),
-            inspection_requirement=inspection_requirement_out.model_dump_json(),
-            task_record_id=celery_record.id,
+        # Dispatch to Dramatiq async actor
+        ai_inspection_task_async.send(
+            record_out.model_dump_json(),
+            inspection_requirement_out.model_dump_json(),
+            str(celery_record.id),
         )
         return response_base.success(
             res=CustomResponseCodeEnum.SUCCESS,

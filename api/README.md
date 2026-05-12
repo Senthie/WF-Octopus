@@ -9,8 +9,12 @@
  * Copyright (c) 2026 by '浪川' email: '1214391613@qq.com', All Rights Reserved.
 -->
 
-启动 celery 服务
+启动 Dramatiq worker（已将任务迁移至 Dramatiq）
 
 ```sh
-uv run celery -A app.core.celery:celery_app worker --pool=threads -c 1000 --loglevel=info
+# 激活虚拟环境后安装依赖：
+pip install "dramatiq[redis]" "uvloop>=0.17.0"
+
+# 启动示例 worker（根据需要调整模块/队列）
+dramatiq app.tasks.inspection_dramatiq --processes 1 --threads 8
 ```

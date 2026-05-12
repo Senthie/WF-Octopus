@@ -20,8 +20,10 @@ from app.core.redis import RedisClient, get_redis
 from app.core.response import ResponseModel, response_base
 from app.enums.response_code_enum import CustomResponseCodeEnum
 from app.services.celery_service import CeleryTaskRecordService
-from app.tasks.example_task import async_demo, example_task
-from app.tasks.ollama_task import ollama_generate
+
+# Use Dramatiq actors
+from app.tasks.example_dramatiq import async_demo_async, example_task_async
+from app.tasks.ollama_dramatiq import ollama_generate_async
 
 router = APIRouter(prefix='/celery', tags=['A celery test api'])
 
@@ -47,13 +49,13 @@ async def test(
 ) -> ResponseModel:
     """ """
     try:
-        task = example_task.delay(name=name)
+        message = example_task_async.send(name=name)
+        task_id = getattr(message, 'message_id', str(message))
         return response_base.success(
             res=CustomResponseCodeEnum.SUCCESS,
-            data={'task_id': task.id, 'status': 'queued'},
+            data={'task_id': task_id, 'status': 'queued'},
         )
     except Exception as e:
-        # 返回未知异常的响应格式
         return response_base.fail(
             res=CustomResponseCodeEnum.UNKNOWN_ERROR,
             data=str(e),
@@ -62,24 +64,22 @@ async def test(
 
 @router.post('/fetch')
 async def fetch_url(name: str):
-    task = async_demo.delay(name)
+    message = async_demo_async.send(name)
+    task_id = getattr(message, 'message_id', str(message))
 
     return response_base.success(
         res=CustomResponseCodeEnum.SUCCESS,
-        data={'task_id': task.id, 'status': 'queued'},
+        data={'task_id': task_id, 'status': 'queued'},
     )
 
 
 @router.get('/fetch/{task_id}')
-async def get_fetch_result(task_id: str):
-    from celery.result import AsyncResult
-
-    from app.core.celery import celery_app
-
-    result = AsyncResult(task_id, app=celery_app)
-    if result.ready():
-        return {'status': result.status, 'result': result.result}
-    return {'status': result.status}
+async def get_fetch_result(task_id: str, service: CeleryServiceDep):
+    # Return status from task record stored in DB (Dramatiq message id stored as task_id)
+    record = await service.get_task_record_by_task_id(task_id)
+    if not record:
+        raise HTTPException(404, 'Task not found')
+    return {'status': record.status, 'result': record.result, 'error': record.error}
 
 
 class OllamaRequest(BaseModel):
@@ -90,8 +90,8 @@ class OllamaRequest(BaseModel):
 @router.post('/generate')
 async def generate(req: OllamaRequest, service: CeleryServiceDep):
     # 发送 Celery 异步任务
-    task = ollama_generate.delay(req.prompt, req.model)
-    task_id = task.id
+    message = ollama_generate_async.send(req.prompt, req.model)
+    task_id = getattr(message, 'message_id', str(message))
 
     try:
         # 在数据库中记录任务（状态 pending）
