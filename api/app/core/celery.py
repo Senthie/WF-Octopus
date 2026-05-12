@@ -2,20 +2,21 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-05-09 11:06:05
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-09 14:31:26
+LastEditTime: 2026-05-12 15:06:55
 FilePath: /api/app/core/celery.py
-Description:
+Description: Celery 的创建和配置文件
 
 Celery Setting
 
 Copyright (c) 2026 by '浪川' email: '1214391613@qq.com', All Rights Reserved.
 """
 
-# app/core/celery.py
 from celery import Celery
 
 from app.core.config import settings
+from app.core.logging import get_logger
 
+logger = get_logger(__name__)
 # 创建全局唯一的 Celery 应用实例
 celery_app = Celery(
     'fastapi_celery',
@@ -41,8 +42,8 @@ celery_app.autodiscover_tasks(['app.tasks'], force=True)
 
 # 手动导入任务模块以确保注册
 try:
-    from app.tasks import example_task, ollama_task
+    from app.tasks import example_task, inspection, ollama_task
 
-    print(f'Successfully imported tasks: {list(celery_app.tasks.keys())}')
+    logger.info(f'Successfully imported tasks: {list(celery_app.tasks.keys())}')
 except ImportError as e:
-    print(f'Failed to import tasks: {e}')
+    logger.error(f'Failed to import tasks: {e}')
