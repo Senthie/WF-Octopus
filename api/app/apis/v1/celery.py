@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-27 17:27:26
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-11 14:56:34
+LastEditTime: 2026-05-12 10:54:58
 FilePath: /api/app/apis/v1/celery.py
 Description: 认证相关API端点
 
@@ -35,7 +35,7 @@ def get_celery_db_help(db: DbSession) -> CeleryDbHelp:
     return CeleryDbHelp(db)
 
 
-UserServiceDep = Annotated[CeleryDbHelp, Depends(get_celery_db_help)]
+CeleryServiceDep = Annotated[CeleryDbHelp, Depends(get_celery_db_help)]
 
 
 @router.post(
@@ -88,7 +88,7 @@ class OllamaRequest(BaseModel):
 
 
 @router.post('/generate')
-async def generate(req: OllamaRequest, service: UserServiceDep):
+async def generate(req: OllamaRequest, service: CeleryServiceDep):
     # 发送 Celery 异步任务
     task = ollama_generate.delay(req.prompt, req.model)
     task_id = task.id
@@ -109,8 +109,8 @@ async def generate(req: OllamaRequest, service: UserServiceDep):
 
 
 @router.get('/status/{task_id}')
-async def status(task_id: str, service: UserServiceDep):
-    record = await service.get_task_record(task_id)
+async def status(task_id: str, service: CeleryServiceDep):
+    record = await service.get_task_record_by_task_id(task_id)
     if not record:
         raise HTTPException(404, 'Task not found')
     return {
