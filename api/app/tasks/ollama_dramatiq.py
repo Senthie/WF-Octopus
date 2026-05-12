@@ -11,8 +11,8 @@ from app.core.config import settings
 from app.core.logging import get_logger
 from app.core.mongodb import mongodb_client
 from app.core.pg_database import AsyncSessionLocal
-from app.models.celery import CeleryTaskStatus
-from app.services.celery_service import CeleryTaskRecordService
+from app.models.task_record import TaskStatus
+from app.services.task_record_service import TaskRecordService
 from app.utils.timezone_help import tz_helper
 
 logger = get_logger(__name__)
@@ -27,10 +27,10 @@ async def ollama_generate_async(
         await mongodb_client.connect()
         if task_id:
             async with AsyncSessionLocal() as session:
-                server = CeleryTaskRecordService(session)
+                server = TaskRecordService(session)
                 await server.update_task_status_by_task_id(
                     task_id,
-                    CeleryTaskStatus.STARTED,
+                    TaskStatus.STARTED,
                     started_at=tz_helper.get_current_time('Asia/Shanghai'),
                 )
 
@@ -50,10 +50,10 @@ async def ollama_generate_async(
 
         if task_id:
             async with AsyncSessionLocal() as session:
-                server = CeleryTaskRecordService(session)
+                server = TaskRecordService(session)
                 await server.update_task_status_by_task_id(
                     task_id,
-                    CeleryTaskStatus.SUCCESS,
+                    TaskStatus.SUCCESS,
                     result={'answer': result},
                     ended_at=tz_helper.get_current_time('Asia/Shanghai'),
                 )
@@ -65,10 +65,10 @@ async def ollama_generate_async(
         logger.exception('ollama_generate_async failed')
         if task_id:
             async with AsyncSessionLocal() as session:
-                server = CeleryTaskRecordService(session)
+                server = TaskRecordService(session)
                 await server.update_task_status_by_task_id(
                     task_id,
-                    CeleryTaskStatus.FAILURE,
+                    TaskStatus.FAILURE,
                     error=error_msg,
                     ended_at=tz_helper.get_current_time('Asia/Shanghai'),
                 )

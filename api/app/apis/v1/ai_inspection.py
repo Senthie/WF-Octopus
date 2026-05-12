@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-16 16:33:10
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-12 17:49:54
+LastEditTime: 2026-05-12 19:46:45
 FilePath: /api/app/apis/v1/ai_inspection.py
 Description: 巡检接口点
 
@@ -26,7 +26,7 @@ from app.models.auth.user import UserModel
 from app.schemas import InspectionRecordIn
 from app.schemas.ai_inspection_schema import InspectionRecordOut
 from app.schemas.page_schema import PageReq, PageRes
-from app.services import AiInspectionService, CeleryTaskRecordService
+from app.services import AiInspectionService, TaskRecordService
 
 # Use Dramatiq async actor instead of Celery
 from app.tasks.inspection_dramatiq import ai_inspection_task_async
@@ -46,12 +46,12 @@ def get_organization_service(session: DbSession) -> AiInspectionService:
 AiInspectionServiceDep = Annotated[AiInspectionService, Depends(get_organization_service)]
 
 
-def get_celery_db_help(db: DbSession) -> CeleryTaskRecordService:
+def get_task_sevice(db: DbSession) -> TaskRecordService:
     """获取认证服务实例"""
-    return CeleryTaskRecordService(db)
+    return TaskRecordService(db)
 
 
-CeleryServiceDep = Annotated[CeleryTaskRecordService, Depends(get_celery_db_help)]
+TaskServiceDep = Annotated[TaskRecordService, Depends(get_task_sevice)]
 
 
 @router.post('/', summary='添加检测的拍照记录')
@@ -59,7 +59,7 @@ async def add(
     inD: InspectionRecordIn,
     user: CurrentUser,
     service: AiInspectionServiceDep,
-    celery_service: CeleryServiceDep,
+    task_service: TaskServiceDep,
 ) -> ResponseModel:
     """
     接收一个检测的拍照记录
@@ -67,7 +67,7 @@ async def add(
 
     try:
         # 优先创建一个空的识别数据
-        celery_record = await celery_service.create_task_record(
+        celery_record = await task_service.create_task_record(
             task_id='',
             task_name='ai_inspection_task',
             args=[],

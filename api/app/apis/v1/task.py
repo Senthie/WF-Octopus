@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-27 17:27:26
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-12 12:05:42
+LastEditTime: 2026-05-12 19:47:11
 FilePath: /api/app/apis/v1/celery.py
 Description: 认证相关API端点
 
@@ -19,25 +19,25 @@ from app.core.pg_database import get_session
 from app.core.redis import RedisClient, get_redis
 from app.core.response import ResponseModel, response_base
 from app.enums.response_code_enum import CustomResponseCodeEnum
-from app.services.celery_service import CeleryTaskRecordService
+from app.services.task_record_service import TaskRecordService
 
 # Use Dramatiq actors
 from app.tasks.example_dramatiq import async_demo_async, example_task_async
 from app.tasks.ollama_dramatiq import ollama_generate_async
 
-router = APIRouter(prefix='/celery', tags=['A celery test api'])
+router = APIRouter(prefix='/task', tags=['A async task test point'])
 
 # 依赖注入定义
 DbSession = Annotated[AsyncSession, Depends(get_session)]
 Redis = Annotated[RedisClient, Depends(get_redis)]
 
 
-def get_celery_db_help(db: DbSession) -> CeleryTaskRecordService:
+def get_task_service(db: DbSession) -> TaskRecordService:
     """获取认证服务实例"""
-    return CeleryTaskRecordService(db)
+    return TaskRecordService(db)
 
 
-CeleryServiceDep = Annotated[CeleryTaskRecordService, Depends(get_celery_db_help)]
+CeleryServiceDep = Annotated[TaskRecordService, Depends(get_task_service)]
 
 
 @router.post(

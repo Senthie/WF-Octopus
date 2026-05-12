@@ -18,8 +18,8 @@ from app.models.ai_inspection import (
     InspectionRequirementModel,
 )
 from app.models.auth import PasswordResetModel, RefreshTokenModel, UserModel
-from app.models.celery import CeleryTaskRecordModel, CeleryTaskStatus
 from app.models.file import FileReferenceModel
+from app.models.task_record import TaskRecordModel, TaskStatus
 
 __all__ = [
     'AiExecuteTaskModel',
@@ -29,6 +29,6 @@ __all__ = [
     'RefreshTokenModel',
     'PasswordResetModel',
     'FileReferenceModel',
-    'CeleryTaskRecordModel',
-    'CeleryTaskStatus',
+    'TaskRecordModel',
+    'TaskStatus',
 ]

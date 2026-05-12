@@ -19,10 +19,10 @@ from app.core.config import settings
 from app.core.logging import get_logger
 from app.core.mongodb import mongodb_client
 from app.core.pg_database import AsyncSessionLocal
-from app.models.celery import CeleryTaskStatus
+from app.models.task_record import TaskStatus
 from app.schemas import InspectionRecordOut, InspectionRequirementOut
-from app.services.celery_service import CeleryTaskRecordService
 from app.services.file_service import FileService
+from app.services.task_record_service import TaskRecordService
 from app.utils.timezone_help import tz_helper
 
 logger = get_logger(__name__)
@@ -43,7 +43,7 @@ async def ai_inspection_task_async(record: str, inspection_requirement: str, tas
         if task_record_id:
             task_id = task_record_id
             async with AsyncSessionLocal() as session:
-                server = CeleryTaskRecordService(session)
+                server = TaskRecordService(session)
                 await server.update_by_id(
                     id=UUID(task_record_id),
                     task_id=task_id,
@@ -52,7 +52,7 @@ async def ai_inspection_task_async(record: str, inspection_requirement: str, tas
                         'record': record,
                         'inspection_requirement': inspection_requirement,
                     },
-                    status=CeleryTaskStatus.STARTED,
+                    status=TaskStatus.STARTED,
                     started_at=tz_helper.get_current_time('Asia/Shanghai'),
                 )
 
@@ -83,10 +83,10 @@ async def ai_inspection_task_async(record: str, inspection_requirement: str, tas
 
         if task_record_id:
             async with AsyncSessionLocal() as session:
-                server = CeleryTaskRecordService(session)
+                server = TaskRecordService(session)
                 await server.update_task_status_by_task_id(
                     task_id,
-                    CeleryTaskStatus.SUCCESS,
+                    TaskStatus.SUCCESS,
                     result={'answer': result},
                     ended_at=tz_helper.get_current_time('Asia/Shanghai'),
                 )
@@ -98,10 +98,10 @@ async def ai_inspection_task_async(record: str, inspection_requirement: str, tas
         logger.exception('ai_inspection_task_async failed')
         if task_id:
             async with AsyncSessionLocal() as session:
-                server = CeleryTaskRecordService(session)
+                server = TaskRecordService(session)
                 await server.update_task_status_by_task_id(
                     task_id,
-                    CeleryTaskStatus.FAILURE,
+                    TaskStatus.FAILURE,
                     error=error_msg,
                     ended_at=tz_helper.get_current_time('Asia/Shanghai'),
                 )

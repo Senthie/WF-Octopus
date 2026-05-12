@@ -1,15 +1,5 @@
-"""
-Author: '浪川' '1214391613@qq.com'
-Date: 2026-05-11 12:16:09
-LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-12 12:15:51
-FilePath: /api/app/services/celery_service.py
-Description: celery 数据库操作辅助函数
+"""Task record DB helper (replaces celery_service naming)."""
 
-Copyright (c) 2026 by '浪川' email: '1214391613@qq.com', All Rights Reserved.
-"""
-
-# app/db/celery_task_dao.py
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
@@ -17,10 +7,10 @@ from uuid import UUID, uuid4
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.models import CeleryTaskRecordModel, CeleryTaskStatus
+from app.models import TaskRecordModel, TaskStatus
 
 
-class CeleryTaskRecordService:
+class TaskRecordService:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
@@ -31,16 +21,13 @@ class CeleryTaskRecordService:
         args: Optional[List[Any]] = None,
         kwargs: Optional[Dict[str, Any]] = None,
         related_record_id: Optional[UUID] = None,
-    ) -> CeleryTaskRecordModel:
-        """创建任务记录（通常由发送任务时调用）"""
-        record = CeleryTaskRecordModel(
-            task_id=task_id
-            if len(task_id) > 0
-            else str(uuid4()),  # 生成一个唯一的任务ID，如果未提供则使用UUID4
+    ) -> TaskRecordModel:
+        record = TaskRecordModel(
+            task_id=task_id if len(task_id) > 0 else str(uuid4()),
             task_name=task_name,
             args=args,
             kwargs=kwargs,
-            status=CeleryTaskStatus.PENDING,
+            status=TaskStatus.PENDING,
             related_record_id=related_record_id,
             created_by=uuid4(),
         )
@@ -52,14 +39,13 @@ class CeleryTaskRecordService:
     async def update_task_status_by_task_id(
         self,
         task_id: str,
-        status: CeleryTaskStatus,
+        status: TaskStatus,
         result: Optional[Any] = None,
         error: Optional[str] = None,
         started_at: Optional[datetime] = None,
         ended_at: Optional[datetime] = None,
-    ) -> Optional[CeleryTaskRecordModel]:
-        """更新任务状态和结果"""
-        stmt = select(CeleryTaskRecordModel).where(CeleryTaskRecordModel.task_id == task_id)
+    ) -> Optional[TaskRecordModel]:
+        stmt = select(TaskRecordModel).where(TaskRecordModel.task_id == task_id)
         result_db = await self.db.execute(stmt)
         record = result_db.scalar_one_or_none()
         if not record:
@@ -86,27 +72,21 @@ class CeleryTaskRecordService:
         task_name: str = '',
         args: list | None = None,
         kwargs: dict | None = None,
-        status: CeleryTaskStatus = CeleryTaskStatus.PENDING,
+        status: TaskStatus = TaskStatus.PENDING,
         result: Optional[Any] = None,
         error: Optional[str] = None,
         started_at: Optional[datetime] = None,
         ended_at: Optional[datetime] = None,
-    ) -> Optional[CeleryTaskRecordModel]:
-        """更新任务状态和结果"""
-        stmt = select(CeleryTaskRecordModel).where(CeleryTaskRecordModel.id == id)
+    ) -> Optional[TaskRecordModel]:
+        stmt = select(TaskRecordModel).where(TaskRecordModel.id == id)
         result_db = await self.db.execute(stmt)
         record = result_db.scalar_one_or_none()
         if not record:
             return None
-        # 设置celer 的任务id
-        record.task_id = task_id
 
-        # 设置 celery的任务名
-        task_name = task_name
-        # 设置 参数
+        record.task_id = task_id
         record.args = args
         record.kwargs = kwargs
-
         record.status = status
         if result is not None:
             record.result = result
@@ -121,7 +101,7 @@ class CeleryTaskRecordService:
         await self.db.refresh(record)
         return record
 
-    async def get_task_record_by_task_id(self, task_id: str) -> Optional[CeleryTaskRecordModel]:
-        stmt = select(CeleryTaskRecordModel).where(CeleryTaskRecordModel.task_id == task_id)
+    async def get_task_record_by_task_id(self, task_id: str) -> Optional[TaskRecordModel]:
+        stmt = select(TaskRecordModel).where(TaskRecordModel.task_id == task_id)
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()

@@ -12,8 +12,8 @@ Copyright (c) 2026 by '浪川' email: '1214391613@qq.com', All Rights Reserved.
 
 from app.services.ai_inspection_service import AiInspectionService
 from app.services.auth_service import AuthService
-from app.services.celery_service import CeleryTaskRecordService
 from app.services.inspection_requirement_service import InspectionRequirementService
+from app.services.task_record_service import TaskRecordService
 from app.services.user_service import UserService
 
 __all__ = [
@@ -21,5 +21,5 @@ __all__ = [
     'InspectionRequirementService',
     'AuthService',
     'UserService',
-    'CeleryTaskRecordService',
+    'TaskRecordService',
 ]
