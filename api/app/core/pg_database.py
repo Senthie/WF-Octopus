@@ -2,7 +2,7 @@
 Author: Senthie seemoon2077@gmail.com
 Date: 2025-12-24 16:24:52
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-21 11:19:12
+LastEditTime: 2026-05-12 11:29:10
 FilePath: /api/app/core/pg_database.py
 Description:PostgreSQL database connection and session management.
 
@@ -11,8 +11,9 @@ Copyright (c) 2026 by Senthie email: seemoon2077@gmail.com, All Rights Reserved.
 
 from typing import AsyncGenerator
 
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlmodel import SQLModel
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.config import settings
 
