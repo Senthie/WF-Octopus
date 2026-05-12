@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-27 17:27:26
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-12 10:54:58
+LastEditTime: 2026-05-12 12:05:42
 FilePath: /api/app/apis/v1/celery.py
 Description: 认证相关API端点
 
@@ -19,9 +19,9 @@ from app.core.pg_database import get_session
 from app.core.redis import RedisClient, get_redis
 from app.core.response import ResponseModel, response_base
 from app.enums.response_code_enum import CustomResponseCodeEnum
+from app.services.celery_service import CeleryTaskRecordService
 from app.tasks.example_task import async_demo, example_task
 from app.tasks.ollama_task import ollama_generate
-from app.utils.celery_db_help import CeleryDbHelp
 
 router = APIRouter(prefix='/celery', tags=['A celery test api'])
 
@@ -30,12 +30,12 @@ DbSession = Annotated[AsyncSession, Depends(get_session)]
 Redis = Annotated[RedisClient, Depends(get_redis)]
 
 
-def get_celery_db_help(db: DbSession) -> CeleryDbHelp:
+def get_celery_db_help(db: DbSession) -> CeleryTaskRecordService:
     """获取认证服务实例"""
-    return CeleryDbHelp(db)
+    return CeleryTaskRecordService(db)
 
 
-CeleryServiceDep = Annotated[CeleryDbHelp, Depends(get_celery_db_help)]
+CeleryServiceDep = Annotated[CeleryTaskRecordService, Depends(get_celery_db_help)]
 
 
 @router.post(
