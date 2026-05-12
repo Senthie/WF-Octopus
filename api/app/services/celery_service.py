@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-05-11 12:16:09
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-12 11:59:14
+LastEditTime: 2026-05-12 12:15:51
 FilePath: /api/app/services/celery_service.py
 Description: celery 数据库操作辅助函数
 
@@ -34,7 +34,9 @@ class CeleryTaskRecordService:
     ) -> CeleryTaskRecordModel:
         """创建任务记录（通常由发送任务时调用）"""
         record = CeleryTaskRecordModel(
-            task_id=task_id,
+            task_id=task_id
+            if len(task_id) > 0
+            else str(uuid4()),  # 生成一个唯一的任务ID，如果未提供则使用UUID4
             task_name=task_name,
             args=args,
             kwargs=kwargs,
