@@ -1,3 +1,4 @@
+import base64
 from typing import AsyncGenerator, Optional
 from uuid import UUID
 
@@ -253,3 +254,22 @@ class FileService:
         page_res.total = total
 
         return page_res
+
+    async def get_image_base64_from_storage(self, file_id: UUID) -> str:
+        """从存储中下载图片并返回 base64 字符串"""
+        # 假设你已经有了 service 实例和 session
+        file_reference, file_stream = await self.download_file(file_id)
+
+        # 读取异步生成器中的所有字节
+        try:
+            chunks = []
+            async for chunk in file_stream:
+                chunks.append(chunk)
+            full_bytes = b''.join(chunks)
+        except Exception as e:
+            logger.error(f'Error downloading file: {e}')
+            raise
+
+        # 转换为 base64
+        base64_str = base64.b64encode(full_bytes).decode('utf-8')
+        return base64_str
