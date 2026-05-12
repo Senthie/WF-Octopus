@@ -2,7 +2,7 @@
 Author: kk123047 3254834740@qq.com
 Date: 2025-12-09 18:00:00
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-12 14:50:19
+LastEditTime: 2026-05-12 16:26:18
 FilePath: /api/app/core/mongodb.py
 Description: MongoDB连接管理
 
@@ -35,18 +35,37 @@ class MongoDBClient:
 
     async def connect(self) -> None:
         """Connect to MongoDB."""
-        if self._connected:
-            return
+        # If already connected, verify the connection is still usable. If the
+        # underlying event loop was closed (e.g. previous asyncio.run), the
+        # existing client may be tied to a closed loop and must be recreated.
+        if self._connected and self.client is not None:
+            try:
+                await self.client.admin.command('ping')
+                return
+            except Exception:
+                try:
+                    self.client.close()
+                except Exception:
+                    pass
+                self.client = None
+                self.database = None
+                self.gridfs_bucket = None
+                self._connected = False
+
         try:
+            # Create a fresh client in the current running event loop.
             self.client = AsyncIOMotorClient(settings.mongodb_url)
             self.database = self.client[settings.mongodb_database]
             self.gridfs_bucket = AsyncIOMotorGridFSBucket(self.database)
 
             # Verify connection
-
             await self.client.admin.command('ping')
             self._connected = True
         except ConnectionFailure as e:
+            raise ConnectionError(f'Failed to connect to MongoDB: {e}') from e
+        except Exception as e:
+            # Surface other connection issues as ConnectionError so callers
+            # can handle them uniformly.
             raise ConnectionError(f'Failed to connect to MongoDB: {e}') from e
 
     async def close(self) -> None:
