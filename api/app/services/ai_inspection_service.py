@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-20 10:58:16
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-08 17:21:00
+LastEditTime: 2026-05-12 12:19:03
 FilePath: /api/app/services/ai_inspection_service.py
 Description:  AI检测服务类，用于处理AI相关的业务逻辑
 
@@ -10,18 +10,20 @@ Description:  AI检测服务类，用于处理AI相关的业务逻辑
 Copyright (c) 2026 by '浪川' email: '1214391613@qq.com', All Rights Reserved.
 """
 
+from typing import Tuple
 import uuid
 from uuid import UUID
 
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.core.exceptions import AiInspectionException
+from app.core.exceptions import AiInspectionException, InspectionRequirementException
 from app.enums import CustomResponseCodeEnum
-from app.models import InspectionRecordModel
+from app.models import InspectionRecordModel, InspectionRequirementModel
 from app.models.auth.user import UserModel
 from app.schemas import InspectionRecordIn
 from app.schemas.ai_inspection_schema import InspectionRecordOut
+from app.schemas.inspection_requirement_schema import InspectionRequirementOut
 from app.schemas.page_schema import PageReq, PageRes
 
 
@@ -31,20 +33,39 @@ class AiInspectionService:
 
         self.create_by = uuid.UUID('88ca2407-2e66-4f33-a9b1-c99c1f088ca5')
 
-    async def add(self, inD: InspectionRecordIn, user: UserModel) -> InspectionRecordOut:
+    async def add(
+        self,
+        inD: InspectionRecordIn,
+        user: UserModel,
+        celery_task_id: UUID,
+    ) -> Tuple[InspectionRecordOut, InspectionRequirementOut]:
+        """
+
+        :celery_task_id: str 这里返回的是 pg sql 里表 id 不是 celery 的真正任务ID
+        """
+        # 根据巡检要求明细表，获取要求内容
+        ir = await self.session.get(InspectionRequirementModel, inD.inspection_requirements_id)
+        if ir:
+            ir_schema = InspectionRequirementOut.model_validate(ir)
+        else:
+            raise InspectionRequirementException(
+                CustomResponseCodeEnum.INSPECTION_REQUIREMENT_NOT_FOUND
+            )
         user_id = user.id
+        try:
+            data = inD.model_dump()  # 或 .dict() 取决于 Pydantic 版本
+            data.setdefault('created_by', user_id)  # 例如从上下文中获取
+            data.setdefault('ai_detection_execute_id', celery_task_id)  # 或生成 UUID
+            data.setdefault('ai_inspection_excute_id', celery_task_id)
+            data.setdefault('updated_by', user_id)
 
-        data = inD.model_dump()  # 或 .dict() 取决于 Pydantic 版本
-        data.setdefault('created_by', user_id)  # 例如从上下文中获取
-        data.setdefault('ai_detection_execute_id', None)  # 或生成 UUID
-        data.setdefault('ai_inspection_excute_id', None)
-        data.setdefault('updated_by', user_id)
+            inspection_record = InspectionRecordModel(**data)
+            self.session.add(inspection_record)
+            await self.session.commit()
+        except Exception:
+            await self.session.rollback()
 
-        inspection_record = InspectionRecordModel(**data)
-        self.session.add(inspection_record)
-        await self.session.commit()
-
-        return InspectionRecordOut.model_validate(inspection_record)
+        return InspectionRecordOut.model_validate(inspection_record), ir_schema
 
     async def get_by_id(self, id: UUID) -> InspectionRecordOut:
         record = await self.session.get(InspectionRecordModel, id)

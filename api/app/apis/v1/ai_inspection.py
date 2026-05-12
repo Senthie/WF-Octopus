@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-16 16:33:10
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-28 17:25:24
+LastEditTime: 2026-05-12 14:32:51
 FilePath: /api/app/apis/v1/ai_inspection.py
 Description: 巡检接口点
 
@@ -26,7 +26,8 @@ from app.models.auth.user import UserModel
 from app.schemas import InspectionRecordIn
 from app.schemas.ai_inspection_schema import InspectionRecordOut
 from app.schemas.page_schema import PageReq, PageRes
-from app.services import AiInspectionService
+from app.services import AiInspectionService, CeleryTaskRecordService
+from app.tasks.inspection import ai_inspection_task
 
 router = APIRouter(prefix='/ai-inspection', tags=['ai inspection v1'])
 logger = get_logger(__name__)
@@ -43,19 +44,43 @@ def get_organization_service(session: DbSession) -> AiInspectionService:
 AiInspectionServiceDep = Annotated[AiInspectionService, Depends(get_organization_service)]
 
 
+def get_celery_db_help(db: DbSession) -> CeleryTaskRecordService:
+    """获取认证服务实例"""
+    return CeleryTaskRecordService(db)
+
+
+CeleryServiceDep = Annotated[CeleryTaskRecordService, Depends(get_celery_db_help)]
+
+
 @router.post('/', summary='添加检测的拍照记录')
 async def add(
-    inD: InspectionRecordIn, user: CurrentUser, service: AiInspectionServiceDep
+    inD: InspectionRecordIn,
+    user: CurrentUser,
+    service: AiInspectionServiceDep,
+    celery_service: CeleryServiceDep,
 ) -> ResponseModel:
     """
     接收一个检测的拍照记录
     """
 
     try:
-        res = await service.add(inD, user)
+        # 优先创建一个空的识别数据
+        celery_record = await celery_service.create_task_record(
+            task_id='',
+            task_name='ollama_generate',
+            args=[],
+            kwargs={},
+        )
+        # 获取数据
+        record_out, inspection_requirement_out = await service.add(inD, user, celery_record.id)
+        ai_inspection_task.delay(
+            record=record_out.model_dump_json(),
+            inspection_requirement=inspection_requirement_out.model_dump_json(),
+            task_record_id=celery_record.id,
+        )
         return response_base.success(
             res=CustomResponseCodeEnum.SUCCESS,
-            data=res,
+            data=record_out,
         )
 
     except Exception as e:
