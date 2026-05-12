@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-23 16:28:28
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-08 16:37:27
+LastEditTime: 2026-05-12 15:45:58
 FilePath: /api/app/core/storage/gridfs.py
 Description: MongoDB GridFS 存储后端实现
 
@@ -255,24 +255,22 @@ class GridFSBackend(StorageBackend):
     async def exists(self, file_id: UUID) -> bool:
         """检查文件是否存在于 GridFS"""
         file_id_str = str(file_id)
+
         try:
             files_collection = await self._get_files_collection()
             doc = await files_collection.find_one({'_id': file_id_str})
             return doc is not None
         except PyMongoError as e:
-            logger.error(
-                'Failed to check file existence in GridFS',
-                file_id=file_id_str,
-                bucket=self._bucket_name.value,
-                error=str(e),
-            )
+            logger.error('GridFS exists check failed', file_id=file_id_str, error=str(e))
             return False
         except Exception:
+            # 备用方法：尝试直接打开下载流
             try:
                 bucket = await self._get_bucket()
                 await bucket.open_download_stream(file_id_str)
                 return True
-            except Exception:
+            except Exception as e2:
+                logger.error(f'GridFS file not found: {e2}')
                 return False
 
     async def get_metadata(self, file_id: UUID) -> dict[str, Any]:
