@@ -36,12 +36,12 @@ except ImportError:
 
 from app.models import (  # noqa: F401
     AiExecuteTaskModel,
-    CeleryTaskRecordModel,
     FileReferenceModel,
     InspectionRecordModel,
     InspectionRequirementModel,
     PasswordResetModel,
     RefreshTokenModel,
+    TaskRecordModel,
     UserModel,
 )
 

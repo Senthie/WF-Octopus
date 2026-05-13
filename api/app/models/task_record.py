@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-05-12 18:05:17
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-12 19:49:50
+LastEditTime: 2026-05-13 12:23:14
 FilePath: /api/app/models/task_record.py
 Description:
 
@@ -40,7 +40,7 @@ class TaskStatus(str, enum.Enum):
 
 
 class TaskRecordModel(MyBaseModel, TimestampMixin, AuditMixin, table=True):
-    __tablename__ = 'celery_task_records'  # type: ignore
+    __tablename__ = 'task_records'  # type: ignore
 
     task_id: str = Field(unique=True, index=True, nullable=False)
     task_name: str = Field(index=True, nullable=False)
