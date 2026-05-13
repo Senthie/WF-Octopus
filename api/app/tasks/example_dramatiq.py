@@ -12,14 +12,14 @@ from app.core.logging import get_logger
 logger = get_logger(__name__)
 
 
-@dramatiq.actor(queue_name='default')
+@dramatiq.actor(queue_name='default', store_results=True)
 def example_task_async(name: str, seconds: int = 5):
     time.sleep(seconds)
     logger.info(f'Hello {name}, task finished after {seconds} seconds.')
     return f'Hello {name}, task finished after {seconds} seconds.'
 
 
-@dramatiq.actor(queue_name='default')
+@dramatiq.actor(queue_name='default', store_results=True)
 async def async_demo_async(name: str, seconds: int = 5):
     await asyncio.sleep(seconds)
     logger.info(f'async_demo: Hello {name}, task finished after {seconds} seconds.')
