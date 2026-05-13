@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-16 16:33:10
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-13 16:01:06
+LastEditTime: 2026-05-13 16:17:56
 FilePath: /api/app/apis/v1/ai_inspection.py
 Description: 巡检接口点
 
@@ -24,7 +24,7 @@ from app.enums.response_code_enum import CustomResponseCodeEnum
 from app.middlewares.auth import get_current_user
 from app.models.auth.user import UserModel
 from app.schemas import InspectionRecordIn
-from app.schemas.ai_inspection_schema import InspectionRecordOut
+from app.schemas.ai_inspection_schema import InspectionRecordOut, InspectionRecordUpdateIn
 from app.schemas.page_schema import PageReq, PageRes
 from app.services import AiInspectionService, TaskRecordService
 
@@ -153,7 +153,7 @@ async def delete_by_id(
 
 @router.put('/{id}', summary='更新检测的拍照记录')
 async def update_by_id(
-    id: UUID, inD: InspectionRecordIn, user: CurrentUser, service: AiInspectionServiceDep
+    id: UUID, inD: InspectionRecordUpdateIn, user: CurrentUser, service: AiInspectionServiceDep
 ) -> ResponseModel:
     try:
         res = await service.update_by_id(id, inD, user=user)
@@ -214,11 +214,13 @@ async def re_identification(
         inspection_requirement = await inspection_requitement_service.get_by_id(
             record_out.inspection_requirements_id
         )
-        ai_inspection_task_async.send(
+        message = ai_inspection_task_async.send(
             record_out.model_dump_json(),
             inspection_requirement.model_dump_json(),
             str(task_record.id),
         )
+        message_id = getattr(message, 'message_id', str(message))
+        await task_service.update_by_id(task_record.id, task_id=message_id)
         return response_base.success(
             res=CustomResponseCodeEnum.SUCCESS,
             data='re-identification task has been dispatched',
