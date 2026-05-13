@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-20 10:58:16
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-13 11:57:04
+LastEditTime: 2026-05-13 15:58:26
 FilePath: /api/app/services/ai_inspection_service.py
 Description:  AI检测服务类，用于处理AI相关的业务逻辑
 
@@ -10,7 +10,7 @@ Description:  AI检测服务类，用于处理AI相关的业务逻辑
 Copyright (c) 2026 by '浪川' email: '1214391613@qq.com', All Rights Reserved.
 """
 
-from typing import Tuple
+from typing import Dict, Tuple
 import uuid
 from uuid import UUID
 
@@ -121,3 +121,17 @@ class AiInspectionService:
         page_res.total = total
 
         return page_res
+
+    async def patch_data_by_id(self, id: UUID, data: Dict, user: UserModel):
+        record = await self.session.get_one(InspectionRecordModel, id)
+        if record:
+            # 更新记录的属性
+            for key, value in data.items():
+                setattr(record, key, value)
+
+            record.updated_by = user.id
+            record.touch()
+            await self.session.commit()
+            return InspectionRecordOut.model_validate(record)
+        else:
+            raise AiInspectionException(CustomResponseCodeEnum.INSPECTION_REQUIREMENT_NOT_FOUND)

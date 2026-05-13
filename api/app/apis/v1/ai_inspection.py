@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-16 16:33:10
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-13 12:09:29
+LastEditTime: 2026-05-13 16:01:06
 FilePath: /api/app/apis/v1/ai_inspection.py
 Description: 巡检接口点
 
@@ -185,6 +185,7 @@ async def list_(
 @router.post('/re_identification/{id}', summary='重新进行AI 识别')
 async def re_identification(
     id: UUID,
+    user: CurrentUser,
     service: AiInspectionServiceDep,
     task_service: TaskServiceDep,
     inspection_requitement_service: InspectionRequirementServiceDep,
@@ -203,7 +204,11 @@ async def re_identification(
         )
 
         # 更新 record 的 task_id
-        record_out = await service.update_by_id(id, {'task_id': task_record.id}, user=None)  # type: ignore
+        record_out = await service.patch_data_by_id(
+            id,
+            {'ai_inspection_excute_id': task_record.id, 'ai_detection_execute_id': task_record.id},
+            user=user,
+        )  # type: ignore
 
         # 根据 record 获取 inspection requirement
         inspection_requirement = await inspection_requitement_service.get_by_id(
