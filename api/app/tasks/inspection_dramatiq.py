@@ -37,23 +37,22 @@ async def ai_inspection_task_async(record: str, inspection_requirement: str, tas
         inspection_requirement: JSON string of InspectionRequirementOut
         task_record_id: UUID string for the task record (optional)
     """
-    task_id = None
     try:
         await mongodb_client.connect()
         if task_record_id:
-            task_id = task_record_id
             async with AsyncSessionLocal() as session:
                 server = TaskRecordService(session)
                 await server.update_by_id(
-                    id=UUID(task_record_id),
-                    task_id=task_id,
-                    task_name='ai_inspection_task',
-                    kwargs={
-                        'record': record,
-                        'inspection_requirement': inspection_requirement,
+                    UUID(task_record_id),
+                    **{
+                        'task_name': 'ai_inspection_task',
+                        'kwargs': {
+                            'record': record,
+                            'inspection_requirement': inspection_requirement,
+                        },
+                        'status': TaskStatus.STARTED,
+                        'started_at': tz_helper.get_current_time('Asia/Shanghai'),
                     },
-                    status=TaskStatus.STARTED,
-                    started_at=tz_helper.get_current_time('Asia/Shanghai'),
                 )
 
         record_model: InspectionRecordOut = InspectionRecordOut.model_validate_json(record)
@@ -71,12 +70,11 @@ async def ai_inspection_task_async(record: str, inspection_requirement: str, tas
             'model': settings.ollama_model,
             'prompt': prompt1,
             'stream': False,
-            'images': image_base64,
         }
 
         async with httpx.AsyncClient() as client:
             resp = await client.post(
-                f'{settings.ollama_host}/api/generate', json=payload, timeout=15.0
+                f'{settings.ollama_host}/api/generate', json=payload, timeout=605
             )
             resp.raise_for_status()
             result = resp.json()
@@ -84,11 +82,13 @@ async def ai_inspection_task_async(record: str, inspection_requirement: str, tas
         if task_record_id:
             async with AsyncSessionLocal() as session:
                 server = TaskRecordService(session)
-                await server.update_task_status_by_task_id(
-                    task_id,
-                    TaskStatus.SUCCESS,
-                    result={'answer': result},
-                    ended_at=tz_helper.get_current_time('Asia/Shanghai'),
+                await server.update_by_id(
+                    UUID(task_record_id),
+                    **{
+                        'status': TaskStatus.SUCCESS,
+                        'result': {'answer': result},
+                        'ended_at': tz_helper.get_current_time('Asia/Shanghai'),
+                    },
                 )
 
         return result.get('response', 'No response field')
@@ -96,13 +96,15 @@ async def ai_inspection_task_async(record: str, inspection_requirement: str, tas
     except Exception:
         error_msg = traceback.format_exc()
         logger.exception('ai_inspection_task_async failed')
-        if task_id:
+        if task_record_id:
             async with AsyncSessionLocal() as session:
                 server = TaskRecordService(session)
-                await server.update_task_status_by_task_id(
-                    task_id,
-                    TaskStatus.FAILURE,
-                    error=error_msg,
-                    ended_at=tz_helper.get_current_time('Asia/Shanghai'),
+                await server.update_by_id(
+                    id=UUID(task_record_id),
+                    **{
+                        'status': TaskStatus.FAILURE,
+                        'error': error_msg,
+                        'ended_at': tz_helper.get_current_time('Asia/Shanghai'),
+                    },
                 )
         raise
