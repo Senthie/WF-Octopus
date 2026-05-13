@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-07 10:50:57
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-28 16:58:43
+LastEditTime: 2026-05-13 15:31:58
 FilePath: /api/app/main.py
 Description:
 
@@ -17,7 +17,9 @@ from typing import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.security import OAuth2PasswordBearer
+from fastapi.staticfiles import StaticFiles
 
 from app.apis.v1 import router as v1_router
 from app.core.config import settings
@@ -82,16 +84,31 @@ app = FastAPI(
     title='WF-Octopus API',
     version='0.1.0',
     description='Low-code platform backend with workflow orchestration and AI integration',
-    docs_url='/docs',
-    redoc_url='/redoc',
+    docs_url=None,
+    redoc_url=None,
     openapi_url='/openapi.json',
     lifespan=lifespan,
 )
+
+# 2. 将静态文件目录挂载到 '/resources' 路径
+app.mount('/resources', StaticFiles(directory='app/resources'), name='resources')
 
 
 @app.get('/')
 def get_root():
     return {'message': 'Welcome to the WF-Octopus API'}
+
+
+# 3. 手动定义一个 /docs 路由，使用本地静态文件
+@app.get('/docs', include_in_schema=False)
+async def custom_swagger_ui_html():
+    return get_swagger_ui_html(
+        openapi_url='/openapi.json',  # 使用硬编码的 openapi_url
+        title=app.title + ' - Swagger UI',
+        # 使用本地静态文件
+        swagger_js_url='/resources/static/docs-ui/swagger-ui-bundle.js',
+        swagger_css_url='/resources/static/docs-ui/swagger-ui.css',
+    )
 
 
 app.include_router(v1_router)
