@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-22 17:32:02
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-07 17:12:58
+LastEditTime: 2026-05-13 12:04:36
 FilePath: /api/app/services/inspection_requirement_service.py
 Description: service层，用于处理巡检要求相关的业务逻辑。
 
@@ -38,14 +38,14 @@ class InspectionRequirementService:
         await self.session.commit()
         return inspection_record
 
-    async def get_by_id(self, id: UUID):
+    async def get_by_id(self, id: UUID) -> InspectionRequirementOut:
         statement = select(InspectionRequirementModel).where(
             InspectionRequirementModel.id == id, InspectionRequirementModel.is_deleted == False
         )
         record = await self.session.execute(statement)
         record = record.scalar_one_or_none()
         if record:
-            return record.model_dump()
+            return InspectionRequirementOut.model_validate(record)
         else:
             raise InspectionRequirementException(
                 CustomResponseCodeEnum.INSPECTION_REQUIREMENT_NOT_FOUND

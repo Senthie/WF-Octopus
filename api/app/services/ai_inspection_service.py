@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-20 10:58:16
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-12 12:19:03
+LastEditTime: 2026-05-13 11:57:04
 FilePath: /api/app/services/ai_inspection_service.py
 Description:  AI检测服务类，用于处理AI相关的业务逻辑
 
@@ -22,7 +22,7 @@ from app.enums import CustomResponseCodeEnum
 from app.models import InspectionRecordModel, InspectionRequirementModel
 from app.models.auth.user import UserModel
 from app.schemas import InspectionRecordIn
-from app.schemas.ai_inspection_schema import InspectionRecordOut
+from app.schemas.ai_inspection_schema import InspectionRecordOut, InspectionRecordUpdateIn
 from app.schemas.inspection_requirement_schema import InspectionRequirementOut
 from app.schemas.page_schema import PageReq, PageRes
 
@@ -82,7 +82,7 @@ class AiInspectionService:
             record.updated_by = user.id
             await self.session.commit()
 
-    async def update_by_id(self, id: UUID, inD: InspectionRecordIn, user: UserModel):
+    async def update_by_id(self, id: UUID, inD: InspectionRecordUpdateIn, user: UserModel):
         record = await self.session.get_one(InspectionRecordModel, id)
         if record:
             # 更新记录的属性
@@ -92,7 +92,7 @@ class AiInspectionService:
             record.updated_by = user.id
             record.touch()
             await self.session.commit()
-            return record.model_dump()
+            return InspectionRecordOut.model_validate(record)
         else:
             raise AiInspectionException(CustomResponseCodeEnum.INSPECTION_REQUIREMENT_NOT_FOUND)
 

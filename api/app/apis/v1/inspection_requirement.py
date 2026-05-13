@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-22 17:26:30
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-07 17:13:42
+LastEditTime: 2026-05-13 11:58:52
 FilePath: /api/app/apis/v1/inspection_requirement.py
 Description: 巡检要求接口
 
@@ -32,13 +32,13 @@ DbSession = Annotated[AsyncSession, Depends(get_session)]
 CurrentUser = Annotated[UserModel, Depends(get_current_user)]
 
 
-def get_organization_service(session: DbSession) -> InspectionRequirementService:
+def get_inspection_requirement_service(session: DbSession) -> InspectionRequirementService:
     """获取企业服务实例"""
     return InspectionRequirementService(session)
 
 
 InspectionRequirementServiceDep = Annotated[
-    InspectionRequirementService, Depends(get_organization_service)
+    InspectionRequirementService, Depends(get_inspection_requirement_service)
 ]
 
 

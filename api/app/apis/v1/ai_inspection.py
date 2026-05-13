@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-16 16:33:10
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-12 19:46:45
+LastEditTime: 2026-05-13 12:09:29
 FilePath: /api/app/apis/v1/ai_inspection.py
 Description: 巡检接口点
 
@@ -29,6 +29,7 @@ from app.schemas.page_schema import PageReq, PageRes
 from app.services import AiInspectionService, TaskRecordService
 
 # Use Dramatiq async actor instead of Celery
+from app.services.inspection_requirement_service import InspectionRequirementService
 from app.tasks.inspection_dramatiq import ai_inspection_task_async
 
 router = APIRouter(prefix='/ai-inspection', tags=['ai inspection v1'])
@@ -39,7 +40,7 @@ CurrentUser = Annotated[UserModel, Depends(get_current_user)]
 
 
 def get_organization_service(session: DbSession) -> AiInspectionService:
-    """获取企业服务实例"""
+    """获取检测记录服务实例"""
     return AiInspectionService(session)
 
 
@@ -52,6 +53,16 @@ def get_task_sevice(db: DbSession) -> TaskRecordService:
 
 
 TaskServiceDep = Annotated[TaskRecordService, Depends(get_task_sevice)]
+
+
+def get_inspection_requirement_service(session: DbSession) -> InspectionRequirementService:
+    """获取检测需求服务实例"""
+    return InspectionRequirementService(session)
+
+
+InspectionRequirementServiceDep = Annotated[
+    InspectionRequirementService, Depends(get_inspection_requirement_service)
+]
 
 
 @router.post('/', summary='添加检测的拍照记录')
@@ -169,3 +180,46 @@ async def list_(
 
     res = await service.get_list(page_req=page_req)
     return response_base.success(data=res)  # type: ignore
+
+
+@router.post('/re_identification/{id}', summary='重新进行AI 识别')
+async def re_identification(
+    id: UUID,
+    service: AiInspectionServiceDep,
+    task_service: TaskServiceDep,
+    inspection_requitement_service: InspectionRequirementServiceDep,
+) -> ResponseModel:
+    """
+    重新进行AI 识别
+    """
+
+    try:
+        # 优先创建一个空的识别数据
+        task_record = await task_service.create_task_record(
+            task_id='',
+            task_name='ai_inspection_task',
+            args=[],
+            kwargs={},
+        )
+
+        # 更新 record 的 task_id
+        record_out = await service.update_by_id(id, {'task_id': task_record.id}, user=None)  # type: ignore
+
+        # 根据 record 获取 inspection requirement
+        inspection_requirement = await inspection_requitement_service.get_by_id(
+            record_out.inspection_requirements_id
+        )
+        ai_inspection_task_async.send(
+            record_out.model_dump_json(),
+            inspection_requirement.model_dump_json(),
+            str(task_record.id),
+        )
+        return response_base.success(
+            res=CustomResponseCodeEnum.SUCCESS,
+            data='re-identification task has been dispatched',
+        )
+    except Exception as e:
+        return response_base.fail(
+            res=CustomResponseCodeEnum.INTERNAL_SERVER_ERROR,
+            data=f'Failed to get archive: {str(e)}',
+        )
