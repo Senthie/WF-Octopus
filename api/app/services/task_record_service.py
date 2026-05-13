@@ -1,3 +1,14 @@
+"""
+Author: '浪川' '1214391613@qq.com'
+Date: 2026-05-12 18:05:43
+LastEditors: '浪川' '1214391613@qq.com'
+LastEditTime: 2026-05-13 16:28:39
+FilePath: /api/app/services/task_record_service.py
+Description:
+
+Copyright (c) 2026 by '浪川' email: '1214391613@qq.com', All Rights Reserved.
+"""
+
 """Task record DB helper (replaces celery_service naming)."""
 
 from datetime import datetime
@@ -68,15 +79,7 @@ class TaskRecordService:
     async def update_by_id(
         self,
         id: UUID,
-        task_id: str = '',
-        task_name: str = '',
-        args: list | None = None,
-        kwargs: dict | None = None,
-        status: TaskStatus = TaskStatus.PENDING,
-        result: Optional[Any] = None,
-        error: Optional[str] = None,
-        started_at: Optional[datetime] = None,
-        ended_at: Optional[datetime] = None,
+        **kawargs: Dict[str, Any],
     ) -> Optional[TaskRecordModel]:
         stmt = select(TaskRecordModel).where(TaskRecordModel.id == id)
         result_db = await self.db.execute(stmt)
@@ -84,18 +87,9 @@ class TaskRecordService:
         if not record:
             return None
 
-        record.task_id = task_id
-        record.args = args
-        record.kwargs = kwargs
-        record.status = status
-        if result is not None:
-            record.result = result
-        if error is not None:
-            record.error = error
-        if started_at:
-            record.started_at = started_at
-        if ended_at:
-            record.ended_at = ended_at
+        for key, value in kawargs.items():
+            if hasattr(record, key):
+                setattr(record, key, value)
 
         await self.db.commit()
         await self.db.refresh(record)
