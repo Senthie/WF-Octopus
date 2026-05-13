@@ -1,4 +1,13 @@
-"""Dramatiq async actor for Ollama generate task."""
+"""
+Author: '浪川' '1214391613@qq.com'
+Date: 2026-05-12 17:30:29
+LastEditors: '浪川' '1214391613@qq.com'
+LastEditTime: 2026-05-13 10:33:40
+FilePath: /api/app/tasks/ollama_dramatiq.py
+Description: Dramatiq async actor for Ollama generate task.
+
+Copyright (c) 2026 by '浪川' email: '1214391613@qq.com', All Rights Reserved.
+"""
 
 from __future__ import annotations
 
@@ -18,7 +27,7 @@ from app.utils.timezone_help import tz_helper
 logger = get_logger(__name__)
 
 
-@dramatiq.actor(queue_name='ollama')
+@dramatiq.actor(queue_name='ollama', store_results=True)
 async def ollama_generate_async(
     prompt: str, model: str = 'llama2', image_base64: str = '', task_record_id: str = ''
 ):
