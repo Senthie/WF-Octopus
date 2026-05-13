@@ -2,7 +2,7 @@
  * @Author: '浪川' '1214391613@qq.com'
  * @Date: 2026-04-02 17:07:58
  * @LastEditors: '浪川' '1214391613@qq.com'
- * @LastEditTime: 2026-05-11 18:06:44
+ * @LastEditTime: 2026-05-13 11:08:15
  * @FilePath: /api/README.md
  * @Description: 
  * 
@@ -17,4 +17,10 @@ pip install "dramatiq[redis]" "uvloop>=0.17.0"
 
 # 启动示例 worker（根据需要调整模块/队列）
 dramatiq app.tasks.inspection_dramatiq --processes 1 --threads 8
+```
+
+# 启动 fastapi
+
+```sh
+uvicorn app.main:app --reload --host 0.0.0.0
 ```
