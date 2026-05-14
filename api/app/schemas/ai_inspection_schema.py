@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-16 16:51:01
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-13 15:59:21
+LastEditTime: 2026-05-14 12:26:15
 FilePath: /api/app/schemas/ai_inspection_schema.py
 Description: Ai 巡检的web 输入输出模型
 
@@ -33,10 +33,8 @@ class InspectionRecordOut(BaseModel):
     )
     file_id: UUID = Field(description='图片id')
 
-    ai_detection_execute_id: Optional[UUID] = Field(..., description='AI 执行图片分析的结果')
-    ai_inspection_excute_id: Optional[UUID] = Field(
-        ..., description='Ai 提取的特定巡检项目结果的id'
-    )
+    ai_detection_execute_id: UUID = Field(..., description='AI 执行图片分析的结果')
+    ai_inspection_excute_id: UUID = Field(..., description='Ai 提取的特定巡检项目结果的id')
     responsible_person: str = Field(..., description='区域负责人')
 
     created_by: UUID = Field(..., description='创建者')
