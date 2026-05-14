@@ -25,6 +25,7 @@ dependencies = [
     "tzlocal>=5.3.1",
     "dramatiq>=1.30.0",
     "uvloop>=0.17.0; sys_platform != 'win32'", # ← 关键修改
+    "json-repair>=0.59.9",
 ]
 
 [tool.black]
