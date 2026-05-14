@@ -59,7 +59,7 @@ class FileService:
         mongo_id = None
         user_id = user.id
         bucket_name_type = GridfsBucketNameEnum.get_bucket_by_extension(
-            file.content_type.split('/')[1]
+            file.content_type.split('/')[1] if file.content_type else ''
         )
         storage = GridFSBackend(bucket_name_type)
         try:
@@ -234,7 +234,7 @@ class FileService:
         offset = (page_req.current - 1) * page_req.size
         statement = (
             select(FileReferenceModel)
-            .order_by(FileReferenceModel.created_at.desc())
+            .order_by(FileReferenceModel.created_at.desc())  # type: ignore
             .limit(page_req.maxLimit)
             .offset(offset)
         )
