@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-05-12 18:05:43
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-13 16:28:39
+LastEditTime: 2026-05-14 12:02:12
 FilePath: /api/app/services/task_record_service.py
 Description:
 
@@ -40,7 +40,7 @@ class TaskRecordService:
             kwargs=kwargs,
             status=TaskStatus.PENDING,
             related_record_id=related_record_id,
-            created_by=uuid4(),
+            created_by=uuid4(),  # type: ignore
         )
         self.db.add(record)
         await self.db.commit()
