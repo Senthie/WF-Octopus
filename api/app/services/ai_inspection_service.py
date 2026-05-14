@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-20 10:58:16
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-13 15:58:26
+LastEditTime: 2026-05-14 11:54:53
 FilePath: /api/app/services/ai_inspection_service.py
 Description:  AI检测服务类，用于处理AI相关的业务逻辑
 
@@ -10,7 +10,7 @@ Description:  AI检测服务类，用于处理AI相关的业务逻辑
 Copyright (c) 2026 by '浪川' email: '1214391613@qq.com', All Rights Reserved.
 """
 
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 import uuid
 from uuid import UUID
 
@@ -37,7 +37,8 @@ class AiInspectionService:
         self,
         inD: InspectionRecordIn,
         user: UserModel,
-        celery_task_id: UUID,
+        ai_detection_execute_id: Optional[UUID] = None,
+        ai_inspection_excute_id: Optional[UUID] = None,
     ) -> Tuple[InspectionRecordOut, InspectionRequirementOut]:
         """
 
@@ -55,8 +56,8 @@ class AiInspectionService:
         try:
             data = inD.model_dump()  # 或 .dict() 取决于 Pydantic 版本
             data.setdefault('created_by', user_id)  # 例如从上下文中获取
-            data.setdefault('ai_detection_execute_id', celery_task_id)  # 或生成 UUID
-            data.setdefault('ai_inspection_excute_id', celery_task_id)
+            data.setdefault('ai_detection_execute_id', ai_detection_execute_id)  # 或生成 UUID
+            data.setdefault('ai_inspection_excute_id', ai_inspection_excute_id)
             data.setdefault('updated_by', user_id)
 
             inspection_record = InspectionRecordModel(**data)
