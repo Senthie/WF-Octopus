@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-16 16:33:10
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-13 16:17:56
+LastEditTime: 2026-05-14 12:17:23
 FilePath: /api/app/apis/v1/ai_inspection.py
 Description: 巡检接口点
 
@@ -77,20 +77,28 @@ async def add(
     """
 
     try:
-        # 优先创建一个空的识别数据
-        celery_record = await task_service.create_task_record(
+        # 优先创建一个空的第一次识别的数据
+        ai_detection_execute_record = await task_service.create_task_record(
+            task_id='',
+            task_name='ai_inspection_task',
+            args=[],
+            kwargs={},
+        )
+        ai_inspection_excute_record = await task_service.create_task_record(
             task_id='',
             task_name='ai_inspection_task',
             args=[],
             kwargs={},
         )
         # 获取数据
-        record_out, inspection_requirement_out = await service.add(inD, user, celery_record.id)
+        record_out, inspection_requirement_out = await service.add(
+            inD, user, ai_detection_execute_record.id, ai_inspection_excute_record.id
+        )
         # Dispatch to Dramatiq async actor
         ai_inspection_task_async.send(
             record_out.model_dump_json(),
             inspection_requirement_out.model_dump_json(),
-            str(celery_record.id),
+            user=user.model_dump_json(),
         )
         return response_base.success(
             res=CustomResponseCodeEnum.SUCCESS,
@@ -187,7 +195,6 @@ async def re_identification(
     id: UUID,
     user: CurrentUser,
     service: AiInspectionServiceDep,
-    task_service: TaskServiceDep,
     inspection_requitement_service: InspectionRequirementServiceDep,
 ) -> ResponseModel:
     """
@@ -195,32 +202,18 @@ async def re_identification(
     """
 
     try:
-        # 优先创建一个空的识别数据
-        task_record = await task_service.create_task_record(
-            task_id='',
-            task_name='ai_inspection_task',
-            args=[],
-            kwargs={},
-        )
-
-        # 更新 record 的 task_id
-        record_out = await service.patch_data_by_id(
-            id,
-            {'ai_inspection_excute_id': task_record.id, 'ai_detection_execute_id': task_record.id},
-            user=user,
-        )  # type: ignore
+        # 根据id 获取检测的记录
+        record_out = await service.get_by_id(id)
 
         # 根据 record 获取 inspection requirement
         inspection_requirement = await inspection_requitement_service.get_by_id(
             record_out.inspection_requirements_id
         )
-        message = ai_inspection_task_async.send(
+        ai_inspection_task_async.send(
             record_out.model_dump_json(),
             inspection_requirement.model_dump_json(),
-            str(task_record.id),
+            user=user.model_dump_json(),
         )
-        message_id = getattr(message, 'message_id', str(message))
-        await task_service.update_by_id(task_record.id, task_id=message_id)
         return response_base.success(
             res=CustomResponseCodeEnum.SUCCESS,
             data='re-identification task has been dispatched',
