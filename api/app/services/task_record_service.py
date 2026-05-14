@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-05-12 18:05:43
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-14 12:02:12
+LastEditTime: 2026-05-14 17:44:38
 FilePath: /api/app/services/task_record_service.py
 Description:
 
@@ -43,6 +43,7 @@ class TaskRecordService:
             created_by=uuid4(),  # type: ignore
         )
         self.db.add(record)
+        record.touch()
         await self.db.commit()
         await self.db.refresh(record)
         return record
@@ -90,7 +91,7 @@ class TaskRecordService:
         for key, value in kawargs.items():
             if hasattr(record, key):
                 setattr(record, key, value)
-
+        record.touch()
         await self.db.commit()
         await self.db.refresh(record)
         return record
