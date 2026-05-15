@@ -48,5 +48,5 @@ export const inspection_record_out_schema = z.object({
     responsible_person: z.string()
 })
 
-export type InspectionRecordOut = z.infer<typeof inspection_record_out_schema>
+export type IInspectionRecordOut = z.infer<typeof inspection_record_out_schema>
 
