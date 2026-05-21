@@ -3,7 +3,10 @@ import { useQuasar } from "quasar"
 import { getImageBlobUrl } from "src/apis/file_api"
 import { ai_inspection_v1_list } from "src/apis/inspection_record_api"
 
-import type { IInspectionRecordOut } from "src/interfaces/IInspection"
+import type {
+  IInspectionRecordOut,
+  InspectionRecordUpdateIn,
+} from "src/interfaces/IInspection"
 import type { IPageRes } from "src/interfaces/Ipage"
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue"
 
@@ -135,17 +138,30 @@ const pagination = ref({
 // 控制编辑对话框的显示
 const showEditDialog = ref(false)
 
+let inspection_result_status_options = ref([
+  { label: "正常", value: "normal" },
+  { label: "需要整改", value: "requires_correction" },
+  { label: "整改进行中", value: "in_progress" },
+  { label: "已经整改", value: "corrected" },
+])
+// 存储当前正在编辑的行数据
+const currentEditRow = ref<InspectionRecordUpdateIn>(
+  null as unknown as InspectionRecordUpdateIn,
+)
 const editRow = (row: IInspectionRecordOut) => {
   // 例如：打开对话框，传入当前行数据
   // 深拷贝一份，避免直接修改表格原数据
-  currentEditRow.value = JSON.parse(JSON.stringify(row))
+  currentEditRow.value = {
+    inspection_requirements_id: row.inspection_requirements_id,
+    status: row.status,
+    responsible_person: row.responsible_person,
+    ai_detection_execute_result:
+      row.ai_detection_execute?.result?.response ?? "",
+    ai_inspection_excute_result: row.ai_inspection_excute?.result?.result ?? "",
+  }
   showEditDialog.value = true
 }
 
-// 存储当前正在编辑的行数据
-const currentEditRow = ref<IInspectionRecordOut>(
-  null as unknown as IInspectionRecordOut,
-)
 // 保存修改后的数据
 const saveEdit = async () => {
   if (!currentEditRow.value) return
@@ -165,14 +181,14 @@ const saveEdit = async () => {
 // 取消编辑
 const cancelEdit = () => {
   showEditDialog.value = false
-  currentEditRow.value = null as unknown as IInspectionRecordOut
+  currentEditRow.value = null as unknown as InspectionRecordUpdateIn
 }
 
 /**************删除记录**************** */
 const deleteRow = (row: IInspectionRecordOut) => {
   $q.dialog({
     title: "确认删除",
-    message: `真的要删除“${row.item_name}”吗？`,
+    message: `真的要删除“${row.id}”吗？`,
     cancel: true,
     persistent: true,
   }).onOk(async () => {
@@ -323,27 +339,38 @@ onBeforeUnmount(() => {
     </q-card>
     <!-- 编辑对话框 -->
     <q-dialog v-model="showEditDialog" :persistent="false">
-      <q-card style="min-width: 500px">
+      <q-card style="min-width: 500px; height: 40em">
         <q-card-section>
           <div class="text-h6">修改巡检要求</div>
         </q-card-section>
 
         <q-card-section>
           <q-form @submit="saveEdit">
+            <q-select
+              v-model="currentEditRow.status"
+              :options="inspection_result_status_options"
+              option-value="value"
+              option-label="label"
+              label="巡检类型"
+              emit-value
+              map-options
+              :rules="[(val) => (val && val.length > 0) || '请选择巡检类型']"
+            />
             <q-input
-              v-model="currentEditRow.ai_detection_execute_id"
+              v-model="currentEditRow.ai_detection_execute_result"
               label="AI 执行图片分析的结果"
               outlined
               dense
-              :rules="[(val) => !!val || '项目名称不能为空']"
+              type="textarea"
+              rows="4"
             />
             <q-input
-              v-model="currentEditRow.ai_inspection_excute_id"
+              v-model="currentEditRow.ai_inspection_excute_result"
               label="Ai 提取的特定巡检项目结果的"
               outlined
               dense
               type="textarea"
-              rows="3"
+              rows="5"
             />
             <!-- 如果还需要编辑其他字段，继续添加 -->
           </q-form>
