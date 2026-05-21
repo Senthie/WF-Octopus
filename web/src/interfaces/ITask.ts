@@ -4,6 +4,7 @@ const DramatiqTaskStatusEnum = z.enum([
     'pending',
     'started',
     'success',
+    'failure',
     'retry',
     'revoked',
 ]);
