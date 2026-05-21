@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-20 10:58:16
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-14 11:54:53
+LastEditTime: 2026-05-21 09:42:09
 FilePath: /api/app/services/ai_inspection_service.py
 Description:  AI检测服务类，用于处理AI相关的业务逻辑
 
@@ -14,7 +14,8 @@ from typing import Dict, Optional, Tuple
 import uuid
 from uuid import UUID
 
-from sqlmodel import select
+from sqlalchemy import func, select
+from sqlalchemy.orm import selectinload
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.exceptions import AiInspectionException, InspectionRequirementException
@@ -22,9 +23,14 @@ from app.enums import CustomResponseCodeEnum
 from app.models import InspectionRecordModel, InspectionRequirementModel
 from app.models.auth.user import UserModel
 from app.schemas import InspectionRecordIn
-from app.schemas.ai_inspection_schema import InspectionRecordOut, InspectionRecordUpdateIn
+from app.schemas.ai_inspection_schema import (
+    InspectionRecordConTaskOut,
+    InspectionRecordOut,
+    InspectionRecordUpdateIn,
+)
 from app.schemas.inspection_requirement_schema import InspectionRequirementOut
 from app.schemas.page_schema import PageReq, PageRes
+from app.schemas.task_schema import TaskRecordBaseOut
 
 
 class AiInspectionService:
@@ -97,30 +103,39 @@ class AiInspectionService:
         else:
             raise AiInspectionException(CustomResponseCodeEnum.INSPECTION_REQUIREMENT_NOT_FOUND)
 
-    async def get_list(self, page_req: PageReq) -> PageRes[InspectionRecordOut]:
-        # Query workflows
-        # 计算跳过值
-        skip = (page_req.current - 1) * page_req.size
-        statement = (
+    async def get_list(self, page_req: PageReq) -> PageRes[InspectionRecordConTaskOut]:
+        # ---------- 数据查询（预加载关联，避免 N+1） ----------
+        offset = (page_req.current - 1) * page_req.size
+        stmt = (
             select(InspectionRecordModel)
-            .where(InspectionRecordModel.is_deleted != True)  # noqa: E712
-            .offset(skip)
+            .where(InspectionRecordModel.is_deleted != True)
+            .options(
+                selectinload(InspectionRecordModel.ai_detection_execute),
+                selectinload(InspectionRecordModel.ai_inspection_excute),
+                selectinload(InspectionRecordModel.created_by_user),
+            )
+            .offset(offset)
             .limit(page_req.size)
+            .order_by(InspectionRecordModel.created_at.desc())  # 建议加排序，保证分页稳定
         )
-        result = await self.session.execute(statement)
-        irs = result.scalars().all()
-        irs = [InspectionRecordOut.model_validate(ir) for ir in irs]
-        # Count total
-        count_statement = (
-            select(InspectionRecordModel).where(InspectionRecordModel.is_deleted != True)  # noqa: E712
-        )
-        count_result = await self.session.execute(count_statement)
-        total = len(count_result.scalars().all())
+        result = await self.session.execute(stmt)
+        records = result.scalars().all()
 
+        # ---------- 转换为输出对象 ----------
+        out_list = [self._to_inspection_record_con_task_out(r) for r in records]
+
+        # ---------- 高性能计数 ----------
+        count_stmt = (
+            select(func.count())
+            .select_from(InspectionRecordModel)
+            .where(InspectionRecordModel.is_deleted != True)
+        )
+        total = await self.session.scalar(count_stmt)
+
+        # ---------- 构建分页响应 ----------
         page_res = PageRes.model_validate(page_req.model_dump())
-        page_res.records = irs
-        page_res.total = total
-
+        page_res.records = out_list
+        page_res.total = total if total else 0
         return page_res
 
     async def patch_data_by_id(self, id: UUID, data: Dict, user: UserModel):
@@ -136,3 +151,37 @@ class AiInspectionService:
             return InspectionRecordOut.model_validate(record)
         else:
             raise AiInspectionException(CustomResponseCodeEnum.INSPECTION_REQUIREMENT_NOT_FOUND)
+
+    def _to_inspection_record_con_task_out(
+        self,
+        record: InspectionRecordModel,
+    ) -> InspectionRecordConTaskOut:
+        """将 ORM 对象手动映射为输出 Schema，正确处理关联对象"""
+
+        try:
+            ai_detection_execute = TaskRecordBaseOut.model_validate(record.ai_detection_execute)
+            ai_inspection_excute = TaskRecordBaseOut.model_validate(record.ai_inspection_excute)
+
+            return InspectionRecordConTaskOut(
+                id=record.id,
+                inspection_requirements_id=record.inspection_requirements_id,
+                status=record.status,
+                file_id=record.file_id,
+                ai_detection_execute_id=record.ai_detection_execute_id,
+                ai_inspection_excute_id=record.ai_inspection_excute_id,
+                # 关联的 TaskModel 转换为 TaskRecordBaseOut（如果关联存在）
+                ai_detection_execute=ai_detection_execute,
+                ai_inspection_excute=ai_inspection_excute,
+                responsible_person=record.responsible_person,
+                # 从用户关联中取 username，若不存在则给默认值
+                created_by=record.created_by,
+                created_at=record.created_at,
+                updated_by=record.updated_by,  # AuditMixin 中直接存的 UUID
+                updated_at=record.updated_at,
+                created_by_user=record.created_by_user.name if record.created_by_user else '',
+                updated_by_user=record.updated_by_user.name if record.updated_by_user else '',
+            )
+        except Exception as e:
+            raise AiInspectionException(
+                CustomResponseCodeEnum.INTERNAL_SERVER_ERROR, message=str(e)
+            ) from e

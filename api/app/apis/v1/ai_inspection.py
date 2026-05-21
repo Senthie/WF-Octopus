@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-16 16:33:10
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-14 12:17:23
+LastEditTime: 2026-05-21 09:44:30
 FilePath: /api/app/apis/v1/ai_inspection.py
 Description: 巡检接口点
 
@@ -24,7 +24,7 @@ from app.enums.response_code_enum import CustomResponseCodeEnum
 from app.middlewares.auth import get_current_user
 from app.models.auth.user import UserModel
 from app.schemas import InspectionRecordIn
-from app.schemas.ai_inspection_schema import InspectionRecordOut, InspectionRecordUpdateIn
+from app.schemas.ai_inspection_schema import InspectionRecordConTaskOut, InspectionRecordUpdateIn
 from app.schemas.page_schema import PageReq, PageRes
 from app.services import AiInspectionService, TaskRecordService
 
@@ -180,7 +180,7 @@ async def update_by_id(
 async def list_(
     page_req: PageReq,
     service: AiInspectionServiceDep,
-) -> ResponseSchemaModel[PageRes[InspectionRecordOut]]:
+) -> ResponseSchemaModel[PageRes[InspectionRecordConTaskOut]]:
     """
     获取巡检记录列表
 

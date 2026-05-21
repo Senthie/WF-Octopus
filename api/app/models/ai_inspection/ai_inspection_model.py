@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-17 10:41:34
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-08 12:18:28
+LastEditTime: 2026-05-15 17:41:00
 FilePath: /api/app/models/ai_inspection/ai_inspection_model.py
 Description:Ai 巡检的模型
 
@@ -12,16 +12,18 @@ Copyright (c) 2026 by '浪川' email: '1214391613@qq.com', All Rights Reserved.
 from typing import Optional
 from uuid import UUID
 
-from sqlmodel import JSON, TEXT, Column, Field
+from sqlmodel import JSON, TEXT, Column, Field, Relationship
 
 from app.enums import InspectionResultEnum
 from app.enums.task_enum import TaskStatusEnum
+from app.models.auth.user import UserModel
 from app.models.base_mixin import (
     AuditMixin,
     BaseModel as MyBaseModel,
     SoftDeleteMixin,
     TimestampMixin,
 )
+from app.models.task_record import TaskRecordModel
 
 
 class AiExecuteTaskModel(MyBaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin, table=True):
@@ -82,7 +84,35 @@ class InspectionRecordModel(MyBaseModel, TimestampMixin, SoftDeleteMixin, AuditM
     )
     file_id: UUID = Field(description='图片id')
 
-    ai_detection_execute_id: Optional[UUID] = Field(description='AI 执行图片分析的结果')
-    ai_inspection_excute_id: Optional[UUID] = Field(description='Ai 提取的特定巡检项目结果的id')
+    ai_detection_execute_id: UUID = Field(description='AI 执行图片分析的结果')
+    ai_inspection_excute_id: UUID = Field(description='Ai 提取的特定巡检项目结果的id')
 
     responsible_person: str = Field(default='', description='区域负责人')
+
+    # ========== 逻辑关联（无物理外键）==========
+    ai_detection_execute: Optional[TaskRecordModel] = Relationship(
+        sa_relationship_kwargs={
+            'primaryjoin': 'InspectionRecordModel.ai_detection_execute_id == TaskRecordModel.id',
+            'foreign_keys': '[InspectionRecordModel.ai_detection_execute_id]',
+        }
+    )
+    ai_inspection_excute: Optional[TaskRecordModel] = Relationship(
+        sa_relationship_kwargs={
+            'primaryjoin': 'InspectionRecordModel.ai_inspection_excute_id == TaskRecordModel.id',
+            'foreign_keys': '[InspectionRecordModel.ai_inspection_excute_id]',
+        }
+    )
+
+    # 假设 created_by 存储的是用户 ID（字符串或 UUID），同样逻辑关联
+    created_by_user: Optional[UserModel] = Relationship(
+        sa_relationship_kwargs={
+            'primaryjoin': 'InspectionRecordModel.created_by == UserModel.id',
+            'foreign_keys': '[InspectionRecordModel.created_by]',
+        }
+    )
+    updated_by_user: Optional[UserModel] = Relationship(
+        sa_relationship_kwargs={
+            'primaryjoin': 'InspectionRecordModel.updated_by == UserModel.id',
+            'foreign_keys': '[InspectionRecordModel.updated_by]',
+        }
+    )
