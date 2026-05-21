@@ -1,7 +1,10 @@
 <script lang="ts" setup>
 import { useQuasar } from "quasar"
 import { getImageBlobUrl } from "src/apis/file_api"
-import { ai_inspection_v1_list } from "src/apis/inspection_record_api"
+import {
+  ai_inspection_v1_list,
+  v1_update as inspection_v1_update,
+} from "src/apis/inspection_record_api"
 
 import type {
   IInspectionRecordOut,
@@ -145,12 +148,15 @@ let inspection_result_status_options = ref([
   { label: "已经整改", value: "corrected" },
 ])
 // 存储当前正在编辑的行数据
+const currentEdit_id = ref<string>("")
 const currentEditRow = ref<InspectionRecordUpdateIn>(
   null as unknown as InspectionRecordUpdateIn,
 )
 const editRow = (row: IInspectionRecordOut) => {
   // 例如：打开对话框，传入当前行数据
   // 深拷贝一份，避免直接修改表格原数据
+
+  currentEdit_id.value = row.id
   currentEditRow.value = {
     inspection_requirements_id: row.inspection_requirements_id,
     status: row.status,
@@ -168,12 +174,15 @@ const saveEdit = async () => {
 
   // 调用你实际的更新 API（这里假设为 v1_update）
   // 注意：请根据你的后端接口调整参数
-  //   const res1 = await v1_update(currentEditRow.value.id, currentEditRow.value)
-  //   if (res1.code === 200) {
-  //     // 示例：模拟更新成功
-  //     // 更新成功后重新拉取列表
-  //     await get_requirement_list()
-  //   }
+  const res1 = await inspection_v1_update(
+    currentEdit_id.value,
+    currentEditRow.value,
+  )
+  if (res1.code === 200) {
+    // 示例：模拟更新成功
+    // 更新成功后重新拉取列表
+    await get_inspection_v1_list()
+  }
 
   // 关闭对话框
   showEditDialog.value = false
