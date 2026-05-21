@@ -1,4 +1,5 @@
 import * as z from 'zod'
+import { taskRecordBaseOutSchema } from './ITask'
 export const inspection_requirement_add_schema = z.object({
     item_name: z.string(),
     safety_requirement: z.string()
@@ -45,7 +46,12 @@ export const inspection_record_out_schema = z.object({
     file_id: z.uuid(),
     ai_detection_execute_id: z.uuid(),
     ai_inspection_excute_id: z.uuid(),
-    responsible_person: z.string()
+    responsible_person: z.string(),
+
+    ai_detection_execute: taskRecordBaseOutSchema,
+    ai_inspection_excute: taskRecordBaseOutSchema,
+    created_by_user: z.string(),
+    updated_by_user: z.string(),
 })
 
 export type IInspectionRecordOut = z.infer<typeof inspection_record_out_schema>

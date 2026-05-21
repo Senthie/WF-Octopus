@@ -49,13 +49,6 @@ const get_inspection_v1_list = async () => {
       timeout: 2000,
     })
   }
-  let ids: Set<string> = new Set()
-  for (let req of res.data.records) {
-    ids.add(req.created_by)
-    ids.add(req.updated_by)
-  }
-  const res2 = await v1_get_usernames_by_ids(ids)
-  user_names.value = res2.data
 }
 
 const columns = [
@@ -82,15 +75,16 @@ const columns = [
     sortable: true,
   },
   {
-    name: "ai_detection_execute_id",
+    name: "ai_detection_execute",
     label: "AI 执行图片分析的结果",
-    field: "ai_detection_execute_id",
+    field: "ai_detection_execute",
+    format: (val: string) => `${val.result.response}`,
   },
   {
-    name: "ai_inspection_excute_id",
+    name: "ai_inspection_excute",
     label: "Ai 提取的特定巡检项目结果",
-    field: "ai_inspection_excute_id",
-    sortable: true,
+    field: "ai_inspection_excute",
+    format: (val: string) => `${val.result.result}`,
   },
   {
     name: "responsible_person",
@@ -99,9 +93,9 @@ const columns = [
     sortable: true,
   },
   {
-    name: "updated_by",
+    name: "updated_by_user",
     label: "最后更新人",
-    field: "updated_by",
+    field: "updated_by_user",
   },
   { name: "updated_at", label: "最后更新日期", field: "updated_at" },
   {
