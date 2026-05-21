@@ -256,14 +256,39 @@ onBeforeUnmount(() => {
           <!-- AI 执行图片分析的结果 -->
           <template v-slot:body-cell-ai_detection_execute="props">
             <q-td :props="props" class="text-wrap-cell">
-              {{ props.row.ai_detection_execute?.result?.response ?? "-" }}
+              {{
+                props.row.ai_detection_execute?.result?.response ??
+                "AI 思考中..."
+              }}
             </q-td>
           </template>
 
           <!-- AI 提取的特定巡检项目结果 -->
           <template v-slot:body-cell-ai_inspection_excute="props">
             <q-td :props="props" class="text-wrap-cell">
-              {{ props.row.ai_inspection_excute?.result?.result ?? "-" }}
+              {{
+                props.row.ai_inspection_excute?.result?.result ?? "AI 思考中..."
+              }}
+            </q-td>
+          </template>
+          <template v-slot:body-cell-status="props">
+            <q-td :props="props">
+              <template v-if="props.row.status === 'normal'">
+                <q-chip color="primary" label="正常" />
+              </template>
+              <template v-else-if="props.row.status === 'requires_correction'">
+                <q-chip color="orange" label="需要整改" />
+              </template>
+              <template v-else-if="props.row.status === 'in_progress'">
+                <q-chip color="teal" label="整改进行中" />
+              </template>
+              <template v-else-if="props.row.status === 'corrected'">
+                <q-chip color="green" label="已经整改" />
+              </template>
+
+              <template v-else>
+                <q-chip color="red" label="未知错误" />
+              </template>
             </q-td>
           </template>
         </q-table>
