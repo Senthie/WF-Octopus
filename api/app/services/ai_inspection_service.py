@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-20 10:58:16
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-21 09:42:09
+LastEditTime: 2026-05-21 17:10:19
 FilePath: /api/app/services/ai_inspection_service.py
 Description:  AI检测服务类，用于处理AI相关的业务逻辑
 
@@ -22,6 +22,7 @@ from app.core.exceptions import AiInspectionException, InspectionRequirementExce
 from app.enums import CustomResponseCodeEnum
 from app.models import InspectionRecordModel, InspectionRequirementModel
 from app.models.auth.user import UserModel
+from app.models.task_record import TaskRecordModel
 from app.schemas import InspectionRecordIn
 from app.schemas.ai_inspection_schema import (
     InspectionRecordConTaskOut,
@@ -91,17 +92,35 @@ class AiInspectionService:
 
     async def update_by_id(self, id: UUID, inD: InspectionRecordUpdateIn, user: UserModel):
         record = await self.session.get_one(InspectionRecordModel, id)
+
         if record:
             # 更新记录的属性
-            for key, value in inD.model_dump(exclude_unset=True).items():
-                setattr(record, key, value)
+            record.status = inD.status
+            record.responsible_person = inD.responsible_person
 
             record.updated_by = user.id
             record.touch()
             await self.session.commit()
-            return InspectionRecordOut.model_validate(record)
+
         else:
             raise AiInspectionException(CustomResponseCodeEnum.INSPECTION_REQUIREMENT_NOT_FOUND)
+
+        ai_detection_execute = await self.session.get_one(
+            TaskRecordModel, record.ai_detection_execute_id
+        )
+        ai_inspection_excute = await self.session.get_one(
+            TaskRecordModel, record.ai_inspection_excute_id
+        )
+        ai_detection_execute.result = {'response': inD.ai_detection_execute_result}
+        ai_detection_execute.touch()
+        ai_detection_execute.updated_by = user.id
+
+        ai_inspection_excute.result = {'result': inD.ai_inspection_excute_result}
+        ai_inspection_excute.touch()
+        ai_inspection_excute.updated_by = user.id
+
+        await self.session.commit()
+        return InspectionRecordOut.model_validate(record)
 
     async def get_list(self, page_req: PageReq) -> PageRes[InspectionRecordConTaskOut]:
         # ---------- 数据查询（预加载关联，避免 N+1） ----------
