@@ -98,13 +98,11 @@ const columns = [
     name: "ai_detection_execute",
     label: "AI 执行图片分析的结果",
     field: "ai_detection_execute",
-    format: (val: string) => `${val.result.response}`,
   },
   {
     name: "ai_inspection_excute",
     label: "Ai 提取的特定巡检项目结果",
     field: "ai_inspection_excute",
-    format: (val: string) => `${val.result.result}`,
   },
   {
     name: "responsible_person",
@@ -255,6 +253,19 @@ onBeforeUnmount(() => {
               />
             </q-td>
           </template>
+          <!-- AI 执行图片分析的结果 -->
+          <template v-slot:body-cell-ai_detection_execute="props">
+            <q-td :props="props" class="text-wrap-cell">
+              {{ props.row.ai_detection_execute?.result?.response ?? "-" }}
+            </q-td>
+          </template>
+
+          <!-- AI 提取的特定巡检项目结果 -->
+          <template v-slot:body-cell-ai_inspection_excute="props">
+            <q-td :props="props" class="text-wrap-cell">
+              {{ props.row.ai_inspection_excute?.result?.result ?? "-" }}
+            </q-td>
+          </template>
         </q-table>
         <div
           class="row justify-center q-mt-md bg-white text-black"
@@ -327,4 +338,9 @@ onBeforeUnmount(() => {
     </q-dialog>
   </div>
 </template>
-<style scoped></style>
+<style lang="sass" scoped>
+.text-wrap-cell
+  white-space: normal !important;   /* 允许换行 */
+  word-break: break-word;           /* 长单词/URL 强制换行 */
+  max-width: 300px;                 /* 限制最大宽度，促使换行 */
+</style>
