@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-17 16:16:04
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-04-17 16:16:10
+LastEditTime: 2026-05-15 11:50:01
 FilePath: /api/app/enums/task_enum.py
 Description: 封装简单的任务状态
 
@@ -22,3 +22,12 @@ class TaskStatusEnum(Enum):
     COMPLETED = 'completed'  # 已完成
 
     FAILED = 'failed'  # 错误
+
+
+class DramatiqTaskStatus(str, Enum):
+    PENDING = 'pending'
+    STARTED = 'started'
+    SUCCESS = 'success'
+    FAILURE = 'failure'
+    RETRY = 'retry'
+    REVOKED = 'revoked'
