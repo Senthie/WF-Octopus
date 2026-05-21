@@ -52,3 +52,11 @@ export async function v1_file_upload(
         }
     }
 }
+
+// 获取图片 Blob URL
+export async function getImageBlobUrl(fileId: string): Promise<string> {
+    // 注意要指定 responseType 为 blob
+    const res = await api.get(`/v1/file/${fileId}/url`, { responseType: 'blob' })
+    // 从 blob 创建临时 URL
+    return URL.createObjectURL(res.data)
+}

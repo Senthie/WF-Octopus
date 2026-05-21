@@ -1,15 +1,13 @@
 <script lang="ts" setup>
 import { useQuasar } from "quasar"
+import { getImageBlobUrl } from "src/apis/file_api"
 import { ai_inspection_v1_list } from "src/apis/inspection_record_api"
-import { v1_get_usernames_by_ids } from "src/apis/user_api"
+
 import type { IInspectionRecordOut } from "src/interfaces/IInspection"
 import type { IPageRes } from "src/interfaces/Ipage"
-import { computed, onMounted, ref, watch } from "vue"
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue"
 
 const $q = useQuasar()
-
-// 存储用户名信息
-const user_names = ref<Record<string, string>>({})
 
 // 存储分页信息
 const page = ref<IPageRes<IInspectionRecordOut>>({
@@ -24,9 +22,14 @@ const page = ref<IPageRes<IInspectionRecordOut>>({
 const MaxPage = computed(
   () => Math.ceil(page.value.total / page.value.size) || 1,
 )
+// 记录所有创建的 blob URL
+const blobUrls = ref<string[]>([])
 
 // 获取执行详细的列表
 const get_inspection_v1_list = async () => {
+  blobUrls.value.forEach((url) => URL.revokeObjectURL(url))
+  blobUrls.value = []
+
   const res = await ai_inspection_v1_list(page.value) // 刷新表格
   const {
     records,
@@ -36,7 +39,24 @@ const get_inspection_v1_list = async () => {
     orders,
     maxLimit,
   } = res.data
-  page.value.records = records
+
+  // 为每条记录的图片生成临时 Blob URL
+  const recordsWithImage = await Promise.all(
+    records.map(async (record: any) => {
+      if (record.file_id) {
+        try {
+          const blobUrl = await getImageBlobUrl(record.file_id)
+          blobUrls.value.push(blobUrl) // 记录生成的 Blob URL
+          return { ...record, imageBlobUrl: blobUrl }
+        } catch (e) {
+          return { ...record, imageBlobUrl: "" }
+        }
+      }
+      return record
+    }),
+  )
+
+  page.value.records = recordsWithImage
   page.value.total = total
   page.value.current = current
   // 如果后端实际返回的条数与用户选择的不一致，修正并提示
@@ -188,6 +208,10 @@ watch(
     }
   },
 )
+// 组件卸载时清理
+onBeforeUnmount(() => {
+  blobUrls.value.forEach((url) => URL.revokeObjectURL(url))
+})
 </script>
 
 <template>
@@ -204,6 +228,16 @@ watch(
           v-model:pagination="pagination"
           :rows-per-page="0"
         >
+          <template v-slot:body-cell-file_id="props">
+            <q-td :props="props">
+              <q-img
+                v-if="props.row.imageBlobUrl"
+                :src="props.row.imageBlobUrl"
+                :ratio="16 / 9"
+              />
+              <span v-else>-</span>
+            </q-td>
+          </template>
           <template v-slot:body-cell-actions="props">
             <q-td :props="props">
               <q-btn

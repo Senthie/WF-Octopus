@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-05-12 17:23:09
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-14 12:30:16
+LastEditTime: 2026-05-21 09:35:19
 FilePath: /api/app/tasks/inspection_dramatiq.py
 Description: Dramatiq async actor for AI inspection task.
 
@@ -96,7 +96,8 @@ async def _call_ollama(
 
     async with httpx.AsyncClient() as client:
         resp = await client.post(
-            f'{settings.ollama_host}/api/generate',
+            # f'{settings.ollama_host}/api/generate',
+            'http://14.12.0.172:19516/api/generate',
             json=payload,
             timeout=timeout,
         )
