@@ -175,26 +175,30 @@ class FileService:
 
         storage = GridFSBackend(file_reference.bucket_name_type)
         try:
-            # 2. 删除 PostgreSQL 记录
-            file_reference.soft_delete()
-            file_reference.updated_by = user.id
-            await self.session.commit()
-
-            # 3. 删除 GridFS 文件（最佳努力，失败不回滚）
-            try:
-                await storage.delete(gridfs_id)
-                logger.info(
-                    'File deleted successfully',
-                    file_id=str(file_id),
-                    gridfs_id=gridfs_id,
-                )
-            except Exception as storage_error:
-                logger.error(
-                    'Failed to delete GridFS file (metadata already deleted)',
-                    file_id=str(file_id),
-                    gridfs_id=gridfs_id,
-                    error=str(storage_error),
-                )
+            if not file_reference.is_deleted:
+                # 2. 软删除 PostgreSQL 记录
+                file_reference.soft_delete()
+                file_reference.updated_by = user.id
+                await self.session.commit()
+            else:
+                # 3. 已经软删除了，直接删除 PostgreSQL 记录
+                await self.session.delete(file_reference)
+                await self.session.commit()
+                # 3. 删除 GridFS 文件（最佳努力，失败不回滚）
+                try:
+                    await storage.delete(gridfs_id)
+                    logger.info(
+                        'File deleted successfully',
+                        file_id=str(file_id),
+                        gridfs_id=gridfs_id,
+                    )
+                except Exception as storage_error:
+                    logger.error(
+                        'Failed to delete GridFS file (metadata already deleted)',
+                        file_id=str(file_id),
+                        gridfs_id=gridfs_id,
+                        error=str(storage_error),
+                    )
 
             return True
 

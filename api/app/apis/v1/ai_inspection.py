@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-16 16:33:10
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-21 09:44:30
+LastEditTime: 2026-05-22 08:51:49
 FilePath: /api/app/apis/v1/ai_inspection.py
 Description: 巡检接口点
 
@@ -136,7 +136,7 @@ async def get_by_id(id: UUID, service: AiInspectionServiceDep) -> ResponseModel:
         )
 
 
-@router.delete('/', summary='根据ID 删除检测的拍照记录')
+@router.delete('/{id}', summary='根据ID 删除检测的拍照记录')
 async def delete_by_id(
     id: UUID, user: CurrentUser, service: AiInspectionServiceDep
 ) -> ResponseModel:

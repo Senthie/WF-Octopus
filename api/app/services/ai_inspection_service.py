@@ -2,7 +2,7 @@
 Author: '浪川' '1214391613@qq.com'
 Date: 2026-04-20 10:58:16
 LastEditors: '浪川' '1214391613@qq.com'
-LastEditTime: 2026-05-21 17:10:19
+LastEditTime: 2026-05-22 08:53:55
 FilePath: /api/app/services/ai_inspection_service.py
 Description:  AI检测服务类，用于处理AI相关的业务逻辑
 
@@ -32,6 +32,7 @@ from app.schemas.ai_inspection_schema import (
 from app.schemas.inspection_requirement_schema import InspectionRequirementOut
 from app.schemas.page_schema import PageReq, PageRes
 from app.schemas.task_schema import TaskRecordBaseOut
+from app.services.file_service import FileService
 
 
 class AiInspectionService:
@@ -85,9 +86,24 @@ class AiInspectionService:
     async def delete_by_id(self, id: UUID, user: UserModel):
         # 根据 ID 获取的记录，然后软删除
         record = await self.session.get_one(InspectionRecordModel, id)
-        if record:
+        if record and not record.is_deleted:
             record.soft_delete()
             record.updated_by = user.id
+            await FileService(self.session).delete_by_id(record.file_id, user)  # 删除关联的文件
+            await self.session.commit()
+        elif record and record.is_deleted:
+            ai_detection_execute = await self.session.get_one(
+                TaskRecordModel, record.ai_detection_execute_id
+            )
+            ai_inspection_excute = await self.session.get_one(
+                TaskRecordModel, record.ai_inspection_excute_id
+            )
+            await FileService(self.session).delete_by_id(record.file_id, user)  # 删除关联的文件
+            if ai_detection_execute:
+                await self.session.delete(ai_detection_execute)
+            if ai_inspection_excute:
+                await self.session.delete(ai_inspection_excute)
+            await self.session.delete(record)
             await self.session.commit()
 
     async def update_by_id(self, id: UUID, inD: InspectionRecordUpdateIn, user: UserModel):
