@@ -59,7 +59,7 @@ const loginHandle = async () => {
       await router.push("/main")
     } else {
       Notify.create({
-        message: res.message || "登录失败，请检查邮箱或密码",
+        message: res.msg || "登录失败，请检查邮箱或密码",
         color: "negative",
         position: "top",
         icon: "error",
@@ -95,7 +95,7 @@ const loginHandle = async () => {
           <div class="logo-wrapper">
             <q-icon name="auto_stories" size="48px" class="logo-icon" />
           </div>
-          <h1 class="brand-title">Welcome Back</h1>
+          <h1 class="brand-title">Welcome OCTOPUS</h1>
           <p class="brand-subtitle">请登录您的账户继续探索</p>
         </div>
 
