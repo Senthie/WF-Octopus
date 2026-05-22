@@ -297,14 +297,14 @@ onBeforeUnmount(() => {
                       />
                       <q-chip v-else color="red" dense size="sm" label="未知" />
                     </div>
-                    <div class="text-caption text-wrap text-grey-4 q-mt-xs">
+                    <div class="text-caption text-wrap text-black q-mt-xs">
                       AI分析:
                       {{
                         props.row.ai_detection_execute?.result?.response ??
                         "AI 思考中..."
                       }}
                     </div>
-                    <div class="text-caption text-wrap text-grey-4">
+                    <div class="text-caption text-wrap text-black">
                       巡检项:
                       {{
                         props.row.ai_inspection_excute?.result?.result ??
