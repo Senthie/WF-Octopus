@@ -122,3 +122,40 @@ export async function v1_update(id: string,
         }
     }
 }
+export async function v1_delete(id: string,
+): Promise<IResponse<IInspectionRecordOut>> {
+    try {
+        const response = await api.delete<IResponse<IInspectionRecordOut>>(
+            `/v1/ai-inspection/${id}`,
+        )
+        // 无论成功还是失败都显示消息
+        if (response.data.code !== 200) {
+            Notify.create({
+                type: 'negative',
+                message: response.data.msg || '删除检测要求失败',
+            })
+        } else {
+            Notify.create({
+                type: 'positive',
+                message: '删除记录成功',
+            })
+        }
+
+        return response.data
+    } catch (error) {
+        const errorMessage = extractErrorMessage(error)
+
+        Notify.create({
+            type: 'negative',
+            message: errorMessage,
+        })
+
+        // 返回一个错误响应格式
+        return {
+            code: 500,
+            msg: errorMessage,
+            data: {} as IInspectionRecordOut,
+            timestamp: new Date().toISOString(),
+        }
+    }
+}

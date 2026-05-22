@@ -4,6 +4,7 @@ import { getImageBlobUrl } from "src/apis/file_api"
 import {
   ai_inspection_v1_list,
   v1_update as inspection_v1_update,
+  v1_delete as inspection_v1_delete,
 } from "src/apis/inspection_record_api"
 
 import type {
@@ -202,8 +203,8 @@ const deleteRow = (row: IInspectionRecordOut) => {
     persistent: true,
   }).onOk(async () => {
     // await 删除 API
-    // await v1_delete(row.id)
-    // await get_requirement_list()
+    await inspection_v1_delete(row.id)
+    await get_inspection_v1_list()
   })
 }
 
