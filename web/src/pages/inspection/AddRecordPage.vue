@@ -74,7 +74,7 @@ onMounted(async () => {
 })
 </script>
 <template>
-  <div style="margin-top: 2%">
+  <div style="margin: 2% 2%">
     <div>
       <q-form @submit="onSubmit" @reset="onReset" class="q-gutter-md">
         <ImageUploadComponent></ImageUploadComponent>
@@ -85,6 +85,7 @@ onMounted(async () => {
           label="巡检类型"
           emit-value
           map-options
+          outlined
           :rules="[(val) => (val && val.length > 0) || '请选择巡检类型']"
         />
         <q-input
