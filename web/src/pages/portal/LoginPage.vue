@@ -56,7 +56,7 @@ const loginHandle = async () => {
         timeout: 2000,
       })
       // 跳转到首页
-      await router.push("/main")
+      await router.push("/")
     } else {
       Notify.create({
         message: res.msg || "登录失败，请检查邮箱或密码",

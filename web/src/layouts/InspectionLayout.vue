@@ -2,11 +2,11 @@
   <q-layout view="hHh lpR fFf">
     <q-header elevated class="bg-primary text-white" height-hint="98">
       <q-toolbar>
-        <q-toolbar-title @click="$router.push('/main')">
+        <q-toolbar-title @click="$router.push('/')">
           <q-avatar>
             <img src="https://cdn.quasar.dev/logo-v2/svg/logo-mono-white.svg" />
           </q-avatar>
-          巡检
+          巡检管理
         </q-toolbar-title>
       </q-toolbar>
 
