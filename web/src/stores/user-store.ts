@@ -22,7 +22,7 @@ import type {
     ITokenPair,
     IUserRes,
 } from 'src/interfaces/IAuth'
-import { register_schema } from 'src/interfaces/IAuth'
+import { register_schema, user_res_schema } from 'src/interfaces/IAuth'
 import type { IResponse } from 'src/interfaces/IResponse'
 import { TokenManager } from 'src/utils/tokenManager'
 
@@ -30,7 +30,7 @@ export const useUserStore = defineStore('user', {
     state: () => {
         // 从持久化存储中恢复 tokens
         const persistedTokens = TokenManager.getTokens()
-
+        // 调试：打印 localStorage 中的 user-store 内容
         return {
             user: {
                 id: '',
@@ -65,7 +65,7 @@ export const useUserStore = defineStore('user', {
         async register(user: IRegister) {
             const res = await v1_auth_register(user)
             if (res.code === 200) {
-                this.setUserData(register_schema.parse(res.data.user), res.data.tokens)
+                this.setUserData(user_res_schema.parse(res.data.user), res.data.tokens)
             }
             return res
         },
