@@ -22,7 +22,6 @@ const user_names = ref<Record<string, string>>({})
 const set_user_namse = (id: string) => {
   // 如果 id 在 `user_names` 直接使用
   if (user_names.value[id]) {
-    console.log(`${id}有用户名${user_names.value[id]}`)
     return user_names.value[id]
   } else {
     return "未知"
