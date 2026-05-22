@@ -32,12 +32,15 @@ const MaxPage = computed(
 // 记录所有创建的 blob URL
 const blobUrls = ref<string[]>([])
 
+// 每页条数选项（用于 q-select）
+const sizeOptions = [1, 3, 5, 10, 20, 50, 100]
+
 // 获取执行详细的列表
 const get_inspection_v1_list = async () => {
   blobUrls.value.forEach((url) => URL.revokeObjectURL(url))
   blobUrls.value = []
 
-  const res = await ai_inspection_v1_list(page.value) // 刷新表格
+  const res = await ai_inspection_v1_list(page.value)
   const {
     records,
     total,
@@ -47,13 +50,12 @@ const get_inspection_v1_list = async () => {
     maxLimit,
   } = res.data
 
-  // 为每条记录的图片生成临时 Blob URL
   const recordsWithImage = await Promise.all(
     records.map(async (record: any) => {
       if (record.file_id) {
         try {
           const blobUrl = await getImageBlobUrl(record.file_id)
-          blobUrls.value.push(blobUrl) // 记录生成的 Blob URL
+          blobUrls.value.push(blobUrl)
           return { ...record, imageBlobUrl: blobUrl }
         } catch (e) {
           return { ...record, imageBlobUrl: "" }
@@ -66,7 +68,6 @@ const get_inspection_v1_list = async () => {
   page.value.records = recordsWithImage
   page.value.total = total
   page.value.current = current
-  // 如果后端实际返回的条数与用户选择的不一致，修正并提示
   if (backendSize && backendSize < page.value.size) {
     page.value.size = backendSize
     $q.notify({
@@ -128,9 +129,10 @@ const columns = [
     label: "操作",
     field: "actions",
     align: "center",
-    sortable: false, // 操作列通常不需要排序
+    sortable: false,
   },
 ]
+
 const pagination = ref({
   sortBy: "desc",
   descending: false,
@@ -138,8 +140,8 @@ const pagination = ref({
   rowsPerPage: 1,
   rowsNumber: 2,
 })
+
 /**************修改记录**************** */
-// 控制编辑对话框的显示
 const showEditDialog = ref(false)
 
 let inspection_result_status_options = ref([
@@ -148,15 +150,13 @@ let inspection_result_status_options = ref([
   { label: "整改进行中", value: "in_progress" },
   { label: "已经整改", value: "corrected" },
 ])
-// 存储当前正在编辑的行数据
+
 const currentEdit_id = ref<string>("")
 const currentEditRow = ref<InspectionRecordUpdateIn>(
   null as unknown as InspectionRecordUpdateIn,
 )
-const editRow = (row: IInspectionRecordOut) => {
-  // 例如：打开对话框，传入当前行数据
-  // 深拷贝一份，避免直接修改表格原数据
 
+const editRow = (row: IInspectionRecordOut) => {
   currentEdit_id.value = row.id
   currentEditRow.value = {
     inspection_requirements_id: row.inspection_requirements_id,
@@ -169,26 +169,18 @@ const editRow = (row: IInspectionRecordOut) => {
   showEditDialog.value = true
 }
 
-// 保存修改后的数据
 const saveEdit = async () => {
   if (!currentEditRow.value) return
-
-  // 调用你实际的更新 API（这里假设为 v1_update）
-  // 注意：请根据你的后端接口调整参数
   const res1 = await inspection_v1_update(
     currentEdit_id.value,
     currentEditRow.value,
   )
   if (res1.code === 200) {
-    // 示例：模拟更新成功
-    // 更新成功后重新拉取列表
     await get_inspection_v1_list()
   }
-
-  // 关闭对话框
   showEditDialog.value = false
 }
-// 取消编辑
+
 const cancelEdit = () => {
   showEditDialog.value = false
   currentEditRow.value = null as unknown as InspectionRecordUpdateIn
@@ -202,7 +194,6 @@ const deleteRow = (row: IInspectionRecordOut) => {
     cancel: true,
     persistent: true,
   }).onOk(async () => {
-    // await 删除 API
     await inspection_v1_delete(row.id)
     await get_inspection_v1_list()
   })
@@ -212,18 +203,16 @@ onMounted(async () => {
   await get_inspection_v1_list()
 })
 
-// 监听每页条数变化
 watch(
   () => page.value.size,
   async (newSize, oldSize) => {
     if (newSize !== oldSize) {
-      page.value.current = 1 // 重置到第一页
+      page.value.current = 1
       await get_inspection_v1_list()
     }
   },
 )
 
-// 监听当前页码变化
 watch(
   () => page.value.current,
   async (newCurrent, oldCurrent) => {
@@ -232,7 +221,7 @@ watch(
     }
   },
 )
-// 组件卸载时清理
+
 onBeforeUnmount(() => {
   blobUrls.value.forEach((url) => URL.revokeObjectURL(url))
 })
@@ -243,6 +232,7 @@ onBeforeUnmount(() => {
     <q-card class="my-card bg-secondary text-white">
       <q-card-section></q-card-section>
       <q-card-section>
+        <!-- 表格区域：桌面端表格，移动端自动切换为卡片网格 -->
         <q-table
           title="📋 巡检列表"
           :rows="page.records"
@@ -251,13 +241,106 @@ onBeforeUnmount(() => {
           hide-pagination
           v-model:pagination="pagination"
           :rows-per-page="0"
+          :grid="$q.screen.lt.sm"
         >
+          <!-- 移动端卡片布局 -->
+          <template v-slot:item="props">
+            <div class="q-pa-xs col-12">
+              <q-card class="full-width">
+                <q-card-section horizontal>
+                  <q-card-section class="col-5 flex flex-center">
+                    <q-img
+                      v-if="props.row.imageBlobUrl"
+                      :src="props.row.imageBlobUrl"
+                      :ratio="4 / 3"
+                      style="max-height: 140px"
+                    />
+                    <span v-else class="text-grey">无图片</span>
+                  </q-card-section>
+                  <q-card-section class="col-7 q-pl-sm">
+                    <div class="text-subtitle2 text-weight-bold">
+                      {{ props.row.responsible_person || "--" }}
+                    </div>
+                    <div class="q-mt-xs">
+                      状态:
+                      <q-chip
+                        v-if="props.row.status === 'normal'"
+                        color="primary"
+                        text-color="white"
+                        dense
+                        size="sm"
+                        label="正常"
+                      />
+                      <q-chip
+                        v-else-if="props.row.status === 'requires_correction'"
+                        color="orange"
+                        text-color="white"
+                        dense
+                        size="sm"
+                        label="需要整改"
+                      />
+                      <q-chip
+                        v-else-if="props.row.status === 'in_progress'"
+                        color="teal"
+                        text-color="white"
+                        dense
+                        size="sm"
+                        label="整改中"
+                      />
+                      <q-chip
+                        v-else-if="props.row.status === 'corrected'"
+                        color="green"
+                        text-color="white"
+                        dense
+                        size="sm"
+                        label="已整改"
+                      />
+                      <q-chip v-else color="red" dense size="sm" label="未知" />
+                    </div>
+                    <div class="text-caption text-wrap text-grey-4 q-mt-xs">
+                      AI分析:
+                      {{
+                        props.row.ai_detection_execute?.result?.response ??
+                        "AI 思考中..."
+                      }}
+                    </div>
+                    <div class="text-caption text-wrap text-grey-4">
+                      巡检项:
+                      {{
+                        props.row.ai_inspection_excute?.result?.result ??
+                        "AI 思考中..."
+                      }}
+                    </div>
+                  </q-card-section>
+                </q-card-section>
+                <q-separator />
+                <q-card-actions align="right">
+                  <q-btn
+                    size="sm"
+                    color="primary"
+                    label="修改"
+                    @click="editRow(props.row)"
+                  />
+                  <q-btn
+                    size="sm"
+                    color="negative"
+                    label="删除"
+                    @click="deleteRow(props.row)"
+                    class="q-ml-sm"
+                  />
+                </q-card-actions>
+              </q-card>
+            </div>
+          </template>
+
+          <!-- 桌面端列插槽（grid=false 时生效） -->
           <template v-slot:body-cell-file_id="props">
             <q-td :props="props">
               <q-img
                 v-if="props.row.imageBlobUrl"
                 :src="props.row.imageBlobUrl"
                 :ratio="16 / 9"
+                style="max-width: 160px"
               />
               <span v-else>-</span>
             </q-td>
@@ -279,7 +362,6 @@ onBeforeUnmount(() => {
               />
             </q-td>
           </template>
-          <!-- AI 执行图片分析的结果 -->
           <template v-slot:body-cell-ai_detection_execute="props">
             <q-td :props="props" class="text-wrap-cell">
               {{
@@ -288,8 +370,6 @@ onBeforeUnmount(() => {
               }}
             </q-td>
           </template>
-
-          <!-- AI 提取的特定巡检项目结果 -->
           <template v-slot:body-cell-ai_inspection_excute="props">
             <q-td :props="props" class="text-wrap-cell">
               {{
@@ -311,60 +391,70 @@ onBeforeUnmount(() => {
               <template v-else-if="props.row.status === 'corrected'">
                 <q-chip color="green" label="已经整改" />
               </template>
-
               <template v-else>
                 <q-chip color="red" label="未知错误" />
               </template>
             </q-td>
           </template>
         </q-table>
+
+        <!-- 响应式分页条 -->
         <div
-          class="row justify-center q-mt-md bg-white text-black"
-          style="padding: 0.2%; margin-top: 0; align-items: center"
+          class="row justify-center items-center q-mt-md q-gutter-sm bg-white text-black q-pa-sm rounded-borders"
         >
-          <div class="text-subtitle2" style="margin: 0 0.5%">
-            总条数为: {{ page.total }}
-          </div>
-          <div class="text-subtitle2" style="margin: 0 0.5%">
-            <div>每页记录:</div>
-          </div>
-          <div class="text-subtitle2" style="margin: 0 0.5%">
-            <select v-model="page.size" class="transparent-select-native">
-              <option v-for="n in [1, 3, 5, 10, 20, 50, 100]" :value="n">
-                {{ n }}
-              </option>
-            </select>
-          </div>
-          <div style="margin: 0 0.5%">
-            <q-pagination
-              v-model="page.current"
-              :max="MaxPage"
-              :max-pages="6"
-              boundary-numbers
+          <div class="text-subtitle2">总条数: {{ page.total }}</div>
+          <div class="row items-center q-gutter-x-xs">
+            <span class="text-subtitle2">每页</span>
+            <q-select
+              v-model="page.size"
+              :options="sizeOptions"
+              dense
+              outlined
+              style="width: 80px"
+              emit-value
+              map-options
             />
           </div>
+          <q-pagination
+            v-model="page.current"
+            :max="MaxPage"
+            :max-pages="5"
+            boundary-numbers
+            direction-links
+          />
         </div>
       </q-card-section>
       <q-separator dark />
     </q-card>
-    <!-- 编辑对话框 -->
-    <q-dialog v-model="showEditDialog" :persistent="false">
-      <q-card style="min-width: 500px; height: 40em">
+
+    <!-- 编辑对话框：移动端全屏，桌面端自适应宽度 -->
+    <q-dialog
+      v-model="showEditDialog"
+      :persistent="false"
+      :maximized="$q.screen.lt.sm"
+    >
+      <q-card
+        :style="
+          $q.screen.lt.sm
+            ? ''
+            : 'min-width: 500px; max-width: 90vw; max-height: 80vh'
+        "
+      >
         <q-card-section>
           <div class="text-h6">修改巡检要求</div>
         </q-card-section>
 
-        <q-card-section>
+        <q-card-section class="scroll" style="max-height: calc(80vh - 120px)">
           <q-form @submit="saveEdit">
             <q-select
               v-model="currentEditRow.status"
               :options="inspection_result_status_options"
               option-value="value"
               option-label="label"
-              label="巡检类型"
+              label="巡检状态"
               emit-value
               map-options
-              :rules="[(val) => (val && val.length > 0) || '请选择巡检类型']"
+              :rules="[(val) => (val && val.length > 0) || '请选择巡检状态']"
             />
             <q-input
               v-model="currentEditRow.ai_detection_execute_result"
@@ -376,13 +466,12 @@ onBeforeUnmount(() => {
             />
             <q-input
               v-model="currentEditRow.ai_inspection_excute_result"
-              label="Ai 提取的特定巡检项目结果的"
+              label="AI 提取的特定巡检项目结果"
               outlined
               dense
               type="textarea"
               rows="5"
             />
-            <!-- 如果还需要编辑其他字段，继续添加 -->
           </q-form>
         </q-card-section>
 
@@ -400,9 +489,15 @@ onBeforeUnmount(() => {
     </q-dialog>
   </div>
 </template>
+
 <style lang="sass" scoped>
 .text-wrap-cell
-  white-space: normal !important;   /* 允许换行 */
-  word-break: break-word;           /* 长单词/URL 强制换行 */
-  max-width: 300px;                 /* 限制最大宽度，促使换行 */
+  white-space: normal !important
+  word-break: break-word
+  max-width: 300px
+
+// 移动端卡片内文本强制换行
+.text-wrap
+  white-space: normal
+  word-break: break-word
 </style>
