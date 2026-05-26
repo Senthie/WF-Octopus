@@ -18,6 +18,13 @@ const routes: RouteRecordRaw[] = [
       { path: 'requirement', component: () => import('pages/inspection/RequirementPage.vue') },
     ],
   },
+  {
+    path: '/erp',
+    component: () => import('layouts/ERPQuoteEntry.vue'),
+    children: [
+      { path: '', component: () => import('pages/erp/customer_quote_request_data_show.vue') },
+    ],
+  },
   // Always leave this as last one,
   // but you can also remove it
   {

@@ -70,6 +70,14 @@ const featureModules = ref([
     enabled: true,
   },
   {
+    title: "ERP数据展示",
+    desc: "ERP提取数据展示",
+    icon: "analytics",
+    route: "/erp",
+    color: "warning",
+    enabled: true,
+  },
+  {
     title: "设备监控",
     desc: "实时查看设备状态",
     icon: "monitor_heart",
