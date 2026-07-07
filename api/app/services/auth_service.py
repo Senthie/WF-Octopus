@@ -20,7 +20,7 @@ from app.schemas.auth_schema import (
     UserOut,
 )
 from app.utils.password import get_password_hash, verify_password
-from app.utils.token import (
+from api.app.utils.jwt_utils import (
     TokenType,
     generate_access_token,
     generate_refresh_token,
