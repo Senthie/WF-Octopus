@@ -112,6 +112,14 @@ class Settings(BaseSettings):
                 return redis_url
         return v or ''
 
+    @field_validator('*', mode='before')
+    @classmethod
+    def strip_env_comments(cls, v: object) -> object:
+        """Strip inline comments from environment variable values before validation."""
+        if isinstance(v, str):
+            return v.split('#', 1)[0].strip()
+        return v
+
     @field_validator('secret_key', mode='before')
     @classmethod
     def set_secret_key(cls, v: Optional[str], info) -> str:
@@ -124,7 +132,7 @@ class Settings(BaseSettings):
 
 
 # Global settings instance
-settings = Settings()  # type: ignore
+settings = Settings()
 
 if __name__ == '__main__':
     print(settings.mongodb_url)
