@@ -22,5 +22,5 @@ dramatiq app.tasks.inspection_dramatiq --processes 1 --threads 8
 # 启动 fastapi
 
 ```sh
-uvicorn app.main:app --reload --host 0.0.0.0
+uvicorn app.main:app --reload --host 0.0.0.0 --port 18002
 ```
